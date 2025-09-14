@@ -2,7 +2,7 @@
 /**
  * Shortcode_Interface file
  *
- * @package SrbTransLatin
+ * @package LatnCyrlBridge
  * @since 3.0.0
  */
 

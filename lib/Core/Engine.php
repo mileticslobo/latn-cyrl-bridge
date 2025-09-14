@@ -8,6 +8,10 @@
 
 namespace Oblak\STL\Core;
 
+use function add_action;
+use function add_filter;
+use function apply_filters;
+
 use Oblak\Transliterator;
 use voku\helper\HtmlDomParser;
 
@@ -46,7 +50,7 @@ class Engine {
          *
          * @since 3.0.0
          */
-        $filter_priority = apply_filters( 'srbtranslatin_transliteration_priority', $default_priority );
+        $filter_priority = apply_filters( 'lcb_transliteration_priority', $default_priority );
 
         if ( STL()->is_request( 'ajax' ) && STL()->should_transliterate() ) {
             $this->load_ajax_hooks( $filter_priority );

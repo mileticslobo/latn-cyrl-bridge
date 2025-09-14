@@ -13,7 +13,7 @@
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  *
- * Original work: SrbTransLatin — Predrag Šupurović / Oblak Solutions (GPL-2.0-or-later)
+ * Original work: SrbTransLatin — Predrag Šupurović (GPL-2.0-or-later)
  * This fork is maintained by Plus Innovative.
  */
 
@@ -35,18 +35,15 @@ if ( ! defined( 'STL_PLUGIN_VERSION' ) )   define( 'STL_PLUGIN_VERSION', '3.2.0-
 if ( ! defined( 'STL_PLUGIN_BASENAME' ) )  define( 'STL_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 if ( ! defined( 'STL_PLUGIN_PATH' ) )      define( 'STL_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 
-// i18n: load text domain.
-add_action( 'plugins_loaded', function () {
-	load_plugin_textdomain( LCB_TEXTDOMAIN, false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
-} );
+// i18n is loaded in main class for both legacy and fork textdomains.
 
 // Composer autoload first.
 require_once __DIR__ . '/vendor/autoload.php';
 
-// Original plugin bootstrap (kept for compatibility with existing structure).
+// Plugin bootstrap and aliases.
 require_once __DIR__ . '/lib/Utils/core.php';
-require_once __DIR__ . '/lib/Utils/compat.php';
-require_once __DIR__ . '/lib/Utils/compat-sgi.php';
+require_once __DIR__ . '/lib/PlusInn/Aliases.php';
+require_once __DIR__ . '/lib/PlusInn/WP/Settings_Helper_Trait.php';
 
 // Activation / deactivation hooks (flush rewrite rules; future: add /lat/ rules before flushing).
 register_activation_hook( __FILE__, function () {

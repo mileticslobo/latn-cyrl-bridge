@@ -2,7 +2,7 @@
 /**
  * Cyrilizator class file
  *
- * @package SrbTransLatin
+ * @package LatnCyrlBridge
  */
 
 namespace Oblak\STL\Shortcode;

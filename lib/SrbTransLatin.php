@@ -2,13 +2,18 @@
 /**
  * SrbTransLatin class file.
  *
- * @package SrbTransLatin
+ * @package LatnCyrlBridge
  */
 
 namespace Oblak\STL;
 
-use Oblak\STL\Admin\Admin_Core;
-use Oblak\WP\Settings_Helper_Trait;
+// Admin UI removed in this fork.
+use PlusInn\WP\Settings_Helper_Trait;
+use function add_action;
+use function do_action;
+use function is_admin;
+use function load_plugin_textdomain;
+use function register_widget;
 
 /**
  * Main plugin class wrapping all of the functionalities
@@ -96,7 +101,8 @@ class SrbTransLatin {
      * Class constructor
      */
     private function __construct() {
-        $this->settings = $this->load_settings( 'srbtranslatin', stl_get_settings_array()['settings'], null );
+        // Use a fork-specific option prefix to avoid collisions with the original plugin.
+        $this->settings = $this->load_settings( 'latn_cyrl_bridge', stl_get_settings_array()['settings'], null );
         $this->load_classes();
         $this->init_hooks();
     }
@@ -111,9 +117,7 @@ class SrbTransLatin {
         $this->shortcodes = new Shortcode\Shortcode_Manager();
         $this->ml         = new Core\Multi_Language();
 
-        if ( $this->is_request( 'admin' ) ) {
-            new Admin_Core();
-        }
+        // No admin UI in this fork; settings are loaded programmatically.
 
         new Frontend\Search_Query_Transliterator();
     }
@@ -132,7 +136,9 @@ class SrbTransLatin {
      * Loads the plugin textdomain
      */
     public function load_textdomain() {
-        load_plugin_textdomain( 'srbtranslatin', false, STL_PLUGIN_PATH . 'languages' );
+        // Load fork textdomain from /languages directory.
+        $rel = dirname( STL_PLUGIN_BASENAME ) . '/languages';
+        load_plugin_textdomain( 'latn-cyrl-bridge', false, $rel );
     }
 
     /**
@@ -142,6 +148,10 @@ class SrbTransLatin {
         if ( $this->is_request( 'frontend' ) ) {
             new Frontend\Menu_Extender();
             new Frontend\Title_Transliterator();
+            // Prefix internal URLs in Latin mode and manage SEO tags.
+            new Frontend\Url_Rewriter();
+            new Frontend\SEO();
+            new Frontend\Switcher_Shortcode();
         }
 
         $this->engine = new Core\Engine();
@@ -151,7 +161,8 @@ class SrbTransLatin {
          *
          * @since 3.0.0
          */
-        do_action( 'srbtranslatin_loaded' );
+        // Fire new hook
+        do_action( 'lcb_loaded' );
     }
 
     /**

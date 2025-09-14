@@ -2,10 +2,13 @@
 /**
  * Menu_Extender class file
  *
- * @package SrbTransLatin
+ * @package LatnCyrlBridge
  */
 
 namespace Oblak\STL\Frontend;
+
+use function add_filter;
+use function get_nav_menu_locations;
 
 use stdClass;
 
@@ -39,7 +42,7 @@ class Menu_Extender {
                 $term_id === $menu->term_id &&
                 STL()->get_settings( 'menu', 'extend_menu' ) === $location &&
                 STL()->get_settings( 'menu', 'extend' ) &&
-                STL()->manager->is_serbian() &&
+                STL()->manager->is_supported_locale() &&
                 ! STL()->ml->ml_plugin_active()
             ) {
                 $found = true;
@@ -98,14 +101,10 @@ class Menu_Extender {
         $menu_items = array();
 
         foreach ( stl_get_available_scripts() as $id => $title ) {
+            $url = 'lat' === $id ? lcb_get_lat_url( stl_get_current_url() ) : lcb_get_base_url( stl_get_current_url() );
             $menu_items[] = $this->create_menu_item(
                 $title,
-                add_query_arg(
-                    array(
-                        STL()->manager->get_url_param() => $id,
-                    ),
-                    stl_get_current_url()
-                ),
+                $url,
                 ++$menu_order,
                 $menu_parent,
                 ++$current
@@ -125,7 +124,7 @@ class Menu_Extender {
      * @param  int    $current     Menu item current.
      * @return stdClass            Menu item object.
      */
-    private function create_menu_item( $title, $url, $order, $menu_parent = 0, $current ) {
+    private function create_menu_item( $title, $url, $order, $current, $menu_parent = 0 ) {
         $item = new stdClass();
 
         $item->ID               = 100000 + $order + $menu_parent;

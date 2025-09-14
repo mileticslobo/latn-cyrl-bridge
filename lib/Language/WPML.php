@@ -2,7 +2,7 @@
 /**
  * WPML class file.
  *
- * @package SrbTransLatin
+ * @package LatnCyrlBridge
  */
 
 namespace Oblak\STL\Language;
@@ -22,7 +22,7 @@ class WPML {
      * Class constructor
      */
     public function __construct() {
-        add_filter( 'icl_ls_languages', array( $this, 'extend_wpml_language_selector' ), 99, 1 );
+        \add_filter( 'icl_ls_languages', array( $this, 'extend_wpml_language_selector' ), 99, 1 );
     }
 
     /**
@@ -43,14 +43,14 @@ class WPML {
         }
 
         $serbian_ls = $languages['sr'] ?? $languages['mk'];
-        $script     = STL()->manager->get_script();
+        $script     = \STL()->manager->get_script();
 
         $languages['sr'] = array_merge(
             $serbian_ls,
             array(
-                'native_name'     => do_shortcode( '[stl_cyr]српски (ћир)[/stl_cyr]' ),
+                'native_name'     => \do_shortcode( '[stl_cyr]српски (ћир)[/stl_cyr]' ),
                 'translated_name' => "{$serbian_ls['translated_name']} (cyr)",
-                'url'             => add_query_arg( STL()->manager->get_url_param(), 'cir', $serbian_ls['url'] ),
+                'url'             => \lcb_get_base_url( $serbian_ls['url'] ),
                 'active'          => 'cir' === $script,
             )
         );
@@ -60,7 +60,7 @@ class WPML {
             array(
                 'native_name'     => 'srpski (lat)',
                 'translated_name' => "{$serbian_ls['translated_name']} (lat)",
-                'url'             => add_query_arg( STL()->manager->get_url_param(), 'lat', $serbian_ls['url'] ),
+                'url'             => \lcb_get_lat_url( $serbian_ls['url'] ),
                 'active'          => 'lat' === $script,
             )
         );

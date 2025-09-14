@@ -2,7 +2,7 @@
 /**
  * Base_Shortcode class file
  *
- * @package SrbTransLatin
+ * @package LatnCyrlBridge
  * @since 3.0.0
  */
 namespace Oblak\STL\Shortcode;

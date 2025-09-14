@@ -2,7 +2,7 @@
 /**
  * Script_Manager class file.
  *
- * @package SrbTransLatin
+ * @package LatnCyrlBridge
  * @since 3.0.0
  */
 
@@ -21,6 +21,13 @@ class Script_Manager {
     private $script;
 
     /**
+     * Whether request is under /lat/ prefix
+     *
+     * @var bool
+     */
+    private $prefix_active = false;
+
+    /**
      * Website locale
      *
      * @var string
@@ -31,7 +38,9 @@ class Script_Manager {
      * Class constructor
      */
     public function __construct() {
-        add_action( 'plugins_loaded', array( $this, 'determine_script' ), 500 );
+        \add_action( 'plugins_loaded', array( $this, 'determine_script' ), 500 );
+        // Allow stripping /lat/ from the request path before query parsing.
+        \add_action( 'pre_parse_request', array( $this, 'detect_lat_prefix' ), 0 );
     }
 
     /**
@@ -40,8 +49,33 @@ class Script_Manager {
     public function determine_script() {
         $requested_script = sanitize_text_field( wp_unslash( $_REQUEST[$this->get_url_param()] ?? '' ) ); //phpcs:ignore
 
+        // Detect /lat/ prefix early via REQUEST_URI for initial script decision.
+        $uri_path = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ), PHP_URL_PATH ) : '';
+        $path     = ltrim( $uri_path, '/' );
+        if ( 'lat' === $path || 0 === strpos( $path, 'lat/' ) ) {
+            $this->prefix_active = true;
+            $requested_script    = 'lat';
+        }
+
         $this->script = $this->get_cookie( $requested_script );
         $this->locale = STL()->ml->get_locale();
+    }
+
+    /**
+     * Detect /lat/ prefix and strip it from $wp->request before parsing.
+     *
+     * @param \WP $wp WP object.
+     */
+    public function detect_lat_prefix( $wp ) { // phpcs:ignore
+        $req = ltrim( (string) $wp->request, '/' );
+        if ( 'lat' === $req || 0 === strpos( $req, 'lat/' ) ) {
+            $this->prefix_active = true;
+            $this->script        = 'lat';
+
+            // Strip the leading 'lat' segment so WP can resolve the actual content.
+            $stripped       = ltrim( substr( $req, 3 ), '/' );
+            $wp->request    = $stripped; // e.g. '' for homepage, or 'category/foo'.
+        }
     }
 
     /**
@@ -96,6 +130,24 @@ class Script_Manager {
      */
     public function is_serbian() {
         return 'sr_RS' === $this->get_locale();
+    }
+
+    /**
+     * Checks if the current locale is supported for dual-script handling
+     *
+     * @return bool
+     */
+    public function is_supported_locale() {
+        return in_array( $this->get_locale(), array( 'sr_RS', 'bs_BA', 'mk_MK' ), true );
+    }
+
+    /**
+     * Whether current request is served under the /lat/ prefix
+     *
+     * @return bool
+     */
+    public function is_prefix_active() {
+        return $this->prefix_active;
     }
 
     /**

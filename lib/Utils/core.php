@@ -2,7 +2,7 @@
 /**
  * Utility functions.
  *
- * @package SrbTransLatin
+ * @package LatnCyrlBridge
  * @subpackage Utils
  */
 
@@ -15,6 +15,13 @@ use Oblak\STL\SrbTransLatin;
  */
 function STL() { // phpcs:ignore
     return SrbTransLatin::instance();
+}
+
+/**
+ * Fork helper alias
+ */
+function LCB() { // phpcs:ignore
+    return STL();
 }
 
 /**
@@ -33,8 +40,8 @@ function stl_get_settings_array() {
  */
 function stl_get_available_scripts() {
     return array(
-        'cir' => __( 'Cyrillic', 'srbtranslatin' ),
-        'lat' => __( 'Latin', 'srbtranslatin' ),
+        'cir' => __( 'Cyrillic', 'latn-cyrl-bridge' ),
+        'lat' => __( 'Latin', 'latn-cyrl-bridge' ),
     );
 }
 
@@ -70,6 +77,87 @@ function stl_get_current_url() {
 }
 
 /**
+ * Get base (Cyrillic) variant of a URL.
+ */
+function lcb_get_base_url( $url = null ) {
+    $url   = $url ?? stl_get_current_url();
+    $parts = wp_parse_url( $url );
+    if ( empty( $parts ) ) {
+        return $url;
+    }
+    $path = $parts['path'] ?? '/';
+    if ( 0 === strpos( $path, '/lat/' ) ) {
+        $parts['path'] = substr( $path, 4 );
+        if ( '' === $parts['path'] ) {
+            $parts['path'] = '/';
+        }
+    } elseif ( rtrim( $path, '/' ) === '/lat' ) {
+        $parts['path'] = '/';
+    }
+    return lcb_unparse_url( $parts );
+}
+
+/**
+ * Get Latin variant of a URL (prefix with /lat).
+ */
+function lcb_get_lat_url( $url = null ) {
+    $url   = $url ?? stl_get_current_url();
+    $parts = wp_parse_url( $url );
+    if ( empty( $parts ) ) {
+        return $url;
+    }
+    $path = $parts['path'] ?? '/';
+    if ( 0 === strpos( $path, '/lat/' ) || rtrim( $path, '/' ) === '/lat' ) {
+        return $url;
+    }
+    $parts['path'] = '/lat' . ( '/' === $path ? '/' : $path );
+    return lcb_unparse_url( $parts );
+}
+
+function lcb_unparse_url( $parts ) {
+    $scheme   = isset( $parts['scheme'] ) ? $parts['scheme'] . '://' : '';
+    $user     = $parts['user'] ?? '';
+    $pass     = isset( $parts['pass'] ) ? ':' . $parts['pass']  : '';
+    $auth     = $user ? $user . $pass . '@' : '';
+    $host     = $parts['host'] ?? '';
+    $port     = isset( $parts['port'] ) ? ':' . $parts['port'] : '';
+    $path     = $parts['path'] ?? '';
+    $query    = isset( $parts['query'] ) ? '?' . $parts['query'] : '';
+    $fragment = isset( $parts['fragment'] ) ? '#' . $parts['fragment'] : '';
+
+    return $scheme . $auth . $host . $port . $path . $query . $fragment;
+}
+
+/**
+ * Minimal clean front-end switcher (base vs /lat/)
+ */
+function lcb_switcher( $args = array(), $echo = true ) {
+    $defaults = array(
+        'cir_caption' => __( 'Ћирилица', 'latn-cyrl-bridge' ),
+        'lat_caption' => __( 'Latinica', 'latn-cyrl-bridge' ),
+        'separator'   => ' | ',
+    );
+    $args = wp_parse_args( $args, $defaults );
+
+    $base = lcb_get_base_url();
+    $lat  = lcb_get_lat_url();
+    $html = sprintf(
+        '<a href="%s">%s</a>%s<a href="%s">%s</a>',
+        esc_url( $base ),
+        esc_html( $args['cir_caption'] ),
+        wp_kses_post( $args['separator'] ),
+        esc_url( $lat ),
+        esc_html( $args['lat_caption'] )
+    );
+
+    if ( $echo ) {
+        echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        return;
+    }
+    return $html;
+}
+
+/**
  * Recursively remaps the keys of an array using the provided callback function.
  *
  * @param callable $callback The callback function to apply to each key.
@@ -102,14 +190,14 @@ function stl_script_selector( $args, $eecho = true ) {
 	$args = wp_parse_args(
         $args,
         array(
-			'selector_type' => 'online',
+			'selector_type' => 'oneline',
 			'separator'     => '<span>&nbsp; | &nbsp;</span>',
 			'cir_caption'   => 'Ћирилица',
 			'lat_caption'   => 'Latinica',
 			'inactive_only' => false,
-			'active_script' => STL()->manager->get_script(),
-			'cir_link'      => add_query_arg( STL()->manager->get_url_param(), 'cir', stl_get_current_url() ),
-			'lat_link'      => add_query_arg( STL()->manager->get_url_param(), 'lat', stl_get_current_url() ),
+            'active_script' => STL()->manager->get_script(),
+            'cir_link'      => lcb_get_base_url( stl_get_current_url() ),
+            'lat_link'      => lcb_get_lat_url( stl_get_current_url() ),
         )
 	);
 
@@ -135,7 +223,7 @@ function stl_script_selector( $args, $eecho = true ) {
         );
     }
 
-    $template = locate_template( '/templates/stl/selector-' . $args['selector_type'] . '.php' );
+    $template = locate_template( 'templates/stl/selector-' . $args['selector_type'] . '.php' );
 
     if ( ! $template ) {
         $template = STL_PLUGIN_PATH . 'templates/selector-' . $args['selector_type'] . '.php';

@@ -18,19 +18,19 @@ class Selector_Widget extends \WP_Widget {
      */
     public function __construct() {
         parent::__construct(
-            'oblak_stl_widget',
-            __( 'Serbian Script selector', 'srbtranslatin' ),
+            'plusinn_lcb_widget',
+            __( 'Serbian Script selector', 'latn-cyrl-bridge' ),
             array(
-                'description' => __( 'Serbian Script selection widget', 'srbtranslatin' ),
+                'description' => __( 'Serbian Script selection widget', 'latn-cyrl-bridge' ),
             )
         );
 
         $this->defaults = array(
-            'title'         => __( 'Script Selection', 'srbtranslatin' ),
+            'title'         => __( 'Script Selection', 'latn-cyrl-bridge' ),
             'selector_type' => 'oneline',
             'separator'     => '&nbsp;|&nbsp;',
-            'cir_caption'   => __( 'Ћирилица', 'srbtranslatin' ),
-            'lat_caption'   => __( 'Latinica', 'srbtranslatin' ),
+            'cir_caption'   => __( 'Ћирилица', 'latn-cyrl-bridge' ),
+            'lat_caption'   => __( 'Latinica', 'latn-cyrl-bridge' ),
             'inactive_only' => false,
         );
     }
@@ -47,7 +47,7 @@ class Selector_Widget extends \WP_Widget {
                 <input id="%s" name="%s" value="%s" type="text" class="widefat">
             </p>',
             esc_attr( $this->get_field_id( 'title' ) ),
-            esc_html__( 'Title', 'srbtranslatin' ),
+            esc_html__( 'Title', 'latn-cyrl-bridge' ),
             esc_attr( esc_attr( $this->get_field_id( 'title' ) ) ),
             esc_attr( $this->get_field_name( 'title' ) ),
             esc_attr( $instance['title'] ),
@@ -55,7 +55,7 @@ class Selector_Widget extends \WP_Widget {
 
         printf(
             '<h4>%s</h4>',
-            esc_html__( 'Link Options', 'srbtranslatin' )
+            esc_html__( 'Link Options', 'latn-cyrl-bridge' )
         );
 
         printf(
@@ -64,7 +64,7 @@ class Selector_Widget extends \WP_Widget {
                 <input id="%s" name="%s" value="%s" type="text" class="widefat">
             </p>',
             esc_attr( $this->get_field_id( 'cir_caption' ) ),
-            esc_html__( 'Link text - Cyrillic', 'srbtranslatin' ),
+            esc_html__( 'Link text - Cyrillic', 'latn-cyrl-bridge' ),
             esc_attr( $this->get_field_id( 'cir_caption' ) ),
             esc_attr( $this->get_field_name( 'cir_caption' ) ),
             esc_attr( $instance['cir_caption'] )
@@ -76,7 +76,7 @@ class Selector_Widget extends \WP_Widget {
                 <input id="%s" name="%s" value="%s" type="text" class="widefat">
             </p>',
             esc_attr( $this->get_field_id( 'lat_caption' ) ),
-            esc_html__( 'Link text - Latin', 'srbtranslatin' ),
+            esc_html__( 'Link text - Latin', 'latn-cyrl-bridge' ),
             esc_attr( $this->get_field_id( 'lat_caption' ) ),
             esc_attr( $this->get_field_name( 'lat_caption' ) ),
             esc_attr( $instance['lat_caption'] )
@@ -84,7 +84,7 @@ class Selector_Widget extends \WP_Widget {
 
         printf(
             '<h4>%s</h4>',
-            esc_html__( 'Display Options', 'srbtranslatin' )
+            esc_html__( 'Display Options', 'latn-cyrl-bridge' )
         );
 
         printf(
@@ -95,7 +95,7 @@ class Selector_Widget extends \WP_Widget {
                 </select>
             </p>',
             esc_attr( $this->get_field_id( 'selector_type' ) ),
-            esc_html__( 'Selector style', 'srbtranslatin' ),
+            esc_html__( 'Selector style', 'latn-cyrl-bridge' ),
             esc_attr( $this->get_field_id( 'selector_type' ) ),
             esc_attr( $this->get_field_name( 'selector_type' ) ),
             wp_kses(
@@ -115,7 +115,7 @@ class Selector_Widget extends \WP_Widget {
                 <input id="%s" name="%s" value="%s" type="text" class="widefat">
             </p>',
             esc_attr( $this->get_field_id( 'separator' ) ),
-            esc_html__( 'Separator (oneline)', 'srbtranslatin' ),
+            esc_html__( 'Separator (oneline)', 'latn-cyrl-bridge' ),
             esc_attr( $this->get_field_id( 'separator' ) ),
             esc_attr( $this->get_field_name( 'separator' ) ),
             esc_attr( $instance['separator'] )
@@ -130,9 +130,9 @@ class Selector_Widget extends \WP_Widget {
      */
     private function selector_select( $instance ) {
         $selectors = array(
-            'oneline' => __( 'One Line', 'srbtranslatin' ),
-            'list'    => __( 'Dropdown', 'srbtranslatin' ),
-            'links'   => __( 'List', 'srbtranslatin' ),
+            'oneline' => __( 'One Line', 'latn-cyrl-bridge' ),
+            'list'    => __( 'Dropdown', 'latn-cyrl-bridge' ),
+            'links'   => __( 'List', 'latn-cyrl-bridge' ),
         );
 
         $html = '';

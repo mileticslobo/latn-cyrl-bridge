@@ -2,7 +2,7 @@
 /**
  * Selective_Output class file
  *
- * @package SrbTransLatin
+ * @package LatnCyrlBridge
  */
 
 namespace Oblak\STL\Shortcode;

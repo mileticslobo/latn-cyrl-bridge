@@ -2,10 +2,12 @@
 /**
  * Search_Query_Transliterator class file.
  *
- * @package SrbTransLatin
+ * @package LatnCyrlBridge
  */
 
 namespace Oblak\STL\Frontend;
+
+use function add_filter;
 
 use WP_Query;
 

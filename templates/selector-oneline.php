@@ -2,7 +2,7 @@
 /**
  * List script selector template
  *
- * @package SrbTransLatin
+ * @package LatnCyrlBridge
  * @subpackage Templates
  * @version 3.0.0
  */

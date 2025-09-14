@@ -2,7 +2,7 @@
 /**
  * Multi_Language class file.
  *
- * @package SrbTransLatin
+ * @package LatnCyrlBridge
  */
 
 namespace Oblak\STL\Core;
