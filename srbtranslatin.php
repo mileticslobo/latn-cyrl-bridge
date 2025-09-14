@@ -1,5 +1,4 @@
 <?php
-<?php
 /**
  * Plugin Name:       Latn–Cyrl Bridge (SR)
  * Plugin URI:        https://github.com/plusinnovative/latn-cyrl-bridge
