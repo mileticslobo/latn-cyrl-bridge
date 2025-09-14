@@ -14,7 +14,7 @@
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  *
  * Original work: SrbTransLatin — Predrag Šupurović / Oblak Solutions (GPL-2.0-or-later)
- * This fork is maintained by Plus Innovative SRLS.
+ * This fork is maintained by Plus Innovative.
  */
 
 // Prevent direct access.
