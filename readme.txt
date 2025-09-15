@@ -12,23 +12,24 @@ Two-way transliteration for Serbian (Ćirilica ↔ Latinica) with SEO support an
 
 == Description ==
 
-Latn–Cyrl Bridge lets you publish content once in Serbian Cyrillic (primary script) while automatically serving Latin content under the same structure, prefixed with `/lat/`. Both versions are indexable, with correct canonical and hreflang signals.
+Latn–Cyrl Bridge lets you publish content once in Serbian Cyrillic (primary script) while automatically serving Latin content under the same structure, prefixed with `/lat/`. Both versions can be indexed, with correct canonical/hreflang and `<html lang>`.
 
 Highlights:
 
-- Transliteration: Titles, content, menus and search are transliterated to Latin in `/lat/` mode.
+- Transliteration: Titles, content, menus and search transliterate to Latin in `/lat/` mode.
 - Dual URLs: `/path` (Cyrillic) and `/lat/path` (Latin) resolve to the same content.
-- SEO: Proper canonical and `hreflang` pairs (`sr-Cyrl-RS` ↔ `sr-Latn-RS`), `<html lang>` reflects context.
-- Yoast SEO: Auto-detected. Canonical/hreflang filters applied; a Latin sitemap variant is exposed alongside the default index.
+- SEO: Canonical (self‑canonical by default), `hreflang` pairs (`sr-Cyrl-RS` ↔ `sr-Latn-RS` or `bs-…-BA`), `<html lang>` reflects context.
+- Yoast SEO: Auto-detected. Canonical/hreflang filters applied; a Latin sitemap variant is discoverable from the main index. Works with Yoast Free (fallback hreflang provided).
 - Internal links: In Latin mode, all internal links point to `/lat/` variants.
 
-Fork notes: Based on SrbTransLatin. Rebranded and extended for `/lat/` strategy and SEO.
+Fork notes: Based on SrbTransLatin. Rebranded and extended for `/lat/` routing and SEO.
 
 == Installation ==
 
 1. Upload the plugin folder to `wp-content/plugins`, or install via the WP admin.
 2. Activate the plugin.
-3. Visit your site at `/` (Cyrillic) and `/lat/` (Latin) to verify.
+3. Visit Settings → Permalinks → Save (flush rewrites).
+4. Visit your site at `/` (Cyrillic) and `/lat/` (Latin) to verify.
 
 == Frequently Asked Questions ==
 
@@ -36,7 +37,7 @@ Fork notes: Based on SrbTransLatin. Rebranded and extended for `/lat/` strategy 
 No. Enter content in Cyrillic; the plugin serves transliterated Latin under `/lat/`.
 
 = Does this work with Yoast SEO? =
-Yes. Yoast is auto-detected; the plugin provides canonical/hreflang and a Latin sitemap variant without extra settings.
+Yes. Yoast is auto-detected. Canonical/hreflang integrate via filters; when Yoast Free is used (no hreflang), the plugin outputs hreflang tags itself. A Latin sitemap variant is discoverable from the main index.
 
 = Will internal links point to /lat/ in Latin mode? =
 Yes. Most internal URLs are prefixed with `/lat` automatically in Latin mode, excluding admin/login/REST URLs.

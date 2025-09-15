@@ -20,6 +20,12 @@ use function preg_replace_callback;
 use function wp_parse_url;
 
 class SEO {
+    /**
+     * Tracks if Yoast hreflang filter ran and emitted alternates
+     *
+     * @var bool
+     */
+    private $hreflang_emitted = false;
     public function __construct() {
         // HTML lang attribute.
         add_filter( 'language_attributes', array( $this, 'language_attributes' ), 10, 2 );
@@ -61,6 +67,20 @@ class SEO {
             return $url;
         }
         $current = $this->current_url();
+        // Determine main script preference: 'cir' | 'lat' | null (self).
+        $main = apply_filters( 'lcb_main_script', null );
+        // Back-compat: force base canonical implies main = 'cir'.
+        if ( apply_filters( 'lcb_force_base_canonical', false ) ) {
+            $main = 'cir';
+        }
+
+        if ( 'cir' === $main ) {
+            return $this->ensure_base( $current );
+        }
+        if ( 'lat' === $main ) {
+            return $this->ensure_lat( $current );
+        }
+        // Default: self-canonical per context so both scripts can be indexed.
         return STL()->manager->is_latin() ? $this->ensure_lat( $current ) : $this->ensure_base( $current );
     }
 
@@ -77,6 +97,8 @@ class SEO {
         $current = $this->current_url();
         $base    = $this->ensure_base( $current );
         $lat     = $this->ensure_lat( $current );
+
+        $this->hreflang_emitted = true;
 
         return array(
             $this->lang_tag( $locale, 'Cyrl' ) => $base,
@@ -133,10 +155,6 @@ class SEO {
     }
 
     public function output_fallback_tags() {
-        // Skip when Yoast or another SEO plugin likely handles these.
-        if ( defined( 'WPSEO_VERSION' ) ) {
-            return;
-        }
         if ( ! function_exists( 'STL' ) ) {
             return;
         }
@@ -146,16 +164,32 @@ class SEO {
             return;
         }
 
-        $current = $this->current_url();
-        $base    = $this->ensure_base( $current );
-        $lat     = $this->ensure_lat( $current );
+        $current      = $this->current_url();
+        $base         = $this->ensure_base( $current );
+        $lat          = $this->ensure_lat( $current );
+        $yoast_active = defined( 'WPSEO_VERSION' );
 
-        // Canonical points to current context
-        $canonical = STL()->manager->is_latin() ? $lat : $base;
+        // Canonical: only output if Yoast is not active (Yoast handles canonical); honor main-script preference.
+        if ( ! $yoast_active ) {
+            $main = apply_filters( 'lcb_main_script', null );
+            if ( apply_filters( 'lcb_force_base_canonical', false ) ) {
+                $main = 'cir';
+            }
+            if ( 'cir' === $main ) {
+                $canonical = $base;
+            } elseif ( 'lat' === $main ) {
+                $canonical = $lat;
+            } else {
+                $canonical = STL()->manager->is_latin() ? $lat : $base;
+            }
+            echo '<link rel="canonical" href="' . esc_url( $canonical ) . '" />' . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        }
 
-        echo '<link rel="canonical" href="' . esc_url( $canonical ) . '" />' . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-        echo '<link rel="alternate" href="' . esc_url( $base ) . '" hreflang="' . esc_attr( $this->lang_tag( $locale, 'Cyrl' ) ) . '" />' . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-        echo '<link rel="alternate" href="' . esc_url( $lat ) . '" hreflang="' . esc_attr( $this->lang_tag( $locale, 'Latn' ) ) . '" />' . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        // Hreflang: emit if Yoast did not provide hreflang (free version or another SEO plugin).
+        if ( ! $this->hreflang_emitted ) {
+            echo '<link rel="alternate" href="' . esc_url( $base ) . '" hreflang="' . esc_attr( $this->lang_tag( $locale, 'Cyrl' ) ) . '" />' . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            echo '<link rel="alternate" href="' . esc_url( $lat ) . '" hreflang="' . esc_attr( $this->lang_tag( $locale, 'Latn' ) ) . '" />' . "\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        }
     }
 
     private function current_url() {
@@ -208,5 +242,22 @@ class SEO {
         $fragment = isset( $parts['fragment'] ) ? '#' . $parts['fragment'] : '';
 
         return $scheme . $auth . $host . $port . $path . $query . $fragment;
+    }
+
+    /**
+     * Build a BCP 47 language tag for supported locales and scripts.
+     *
+     * @param string $locale sr_RS or bs_BA
+     * @param string $script Latn or Cyrl
+     * @return string e.g. sr-Latn-RS
+     */
+    private function lang_tag( $locale, $script ) {
+        switch ( $locale ) {
+            case 'bs_BA':
+                return 'bs-' . $script . '-BA';
+            case 'sr_RS':
+            default:
+                return 'sr-' . $script . '-RS';
+        }
     }
 }

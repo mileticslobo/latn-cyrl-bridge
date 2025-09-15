@@ -40,10 +40,26 @@ if ( ! defined( 'STL_PLUGIN_PATH' ) )      define( 'STL_PLUGIN_PATH', plugin_dir
 // Composer autoload first.
 require_once __DIR__ . '/vendor/autoload.php';
 
+// Fallback PSR-4 autoloader for our own classes if Composer mapping is missing.
+spl_autoload_register( function ( $class ) {
+    if ( 0 === strpos( $class, 'Oblak\\STL\\' ) ) {
+        $rel  = str_replace( '\\', '/', substr( $class, strlen( 'Oblak\\STL\\' ) ) );
+        $file = __DIR__ . '/lib/' . $rel . '.php';
+        if ( file_exists( $file ) ) {
+            require_once $file;
+        }
+    }
+} );
+
+// Ensure /lat and /lat/... route into WordPress index so our strip logic can run.
+add_action( 'init', function () {
+    add_rewrite_rule( '^lat/?$', 'index.php', 'top' );
+    add_rewrite_rule( '^lat/.*$', 'index.php', 'top' );
+}, 1 );
+
 // Plugin bootstrap and aliases.
 require_once __DIR__ . '/lib/Utils/core.php';
 require_once __DIR__ . '/lib/PlusInn/Aliases.php';
-require_once __DIR__ . '/lib/PlusInn/WP/Settings_Helper_Trait.php';
 
 // Activation / deactivation hooks (flush rewrite rules; future: add /lat/ rules before flushing).
 register_activation_hook( __FILE__, function () {
@@ -60,5 +76,12 @@ register_deactivation_hook( __FILE__, function () {
 
 // Boot original plugin (STL() is defined in lib/Utils/core.php).
 if ( function_exists( 'STL' ) ) {
-	STL();
+    STL();
 }
+
+// Add Settings action link in the Plugins list.
+add_filter( 'plugin_action_links_' . STL_PLUGIN_BASENAME, function ( $links ) {
+    $url = admin_url( 'options-general.php?page=latn-cyrl-bridge' );
+    $links[] = '<a href="' . esc_url( $url ) . '">' . esc_html__( 'Settings', 'latn-cyrl-bridge' ) . '</a>';
+    return $links;
+} );

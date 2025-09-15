@@ -8,8 +8,10 @@
 namespace Oblak\STL;
 
 // Admin UI removed in this fork.
-use PlusInn\WP\Settings_Helper_Trait;
+use Oblak\WP\Settings_Helper_Trait;
 use function add_action;
+use function add_filter;
+use function get_option;
 use function do_action;
 use function is_admin;
 use function load_plugin_textdomain;
@@ -130,6 +132,7 @@ class SrbTransLatin {
         add_action( 'plugins_loaded', array( $this, 'on_plugins_loaded' ) );
         add_action( 'plugins_loaded', array( $this, 'ml_plugin_compat' ), -1 );
         add_action( 'widgets_init', array( $this, 'register_widget' ) );
+        add_action( 'plugins_loaded', array( $this, 'register_option_filters' ), 1 );
     }
 
     /**
@@ -163,6 +166,30 @@ class SrbTransLatin {
          */
         // Fire new hook
         do_action( 'lcb_loaded' );
+    }
+
+    /**
+     * Map saved options to runtime filters and load admin page
+     */
+    public function register_option_filters() {
+        // Default script cookie when unset
+        add_filter( 'lcb_default_script', function ( $val ) {
+            $opt = get_option( 'lcb_default_script', '' );
+            return in_array( $opt, array( 'cir', 'lat' ), true ) ? $opt : $val;
+        }, 5 );
+
+        // Global canonical target
+        add_filter( 'lcb_main_script', function ( $val ) {
+            $opt = get_option( 'lcb_main_script', 'self' );
+            if ( in_array( $opt, array( 'cir', 'lat' ), true ) ) {
+                return $opt;
+            }
+            return null; // self‑canonical
+        }, 5 );
+
+        if ( $this->is_request( 'admin' ) ) {
+            new Admin\Settings_Page();
+        }
     }
 
     /**

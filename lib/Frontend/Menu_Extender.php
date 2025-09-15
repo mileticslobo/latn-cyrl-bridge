@@ -80,8 +80,8 @@ class Menu_Extender {
             STL()->get_settings( 'menu', 'menu_title' ),
             '#',
             ++$menu_order,
-            0,
-            ++$current
+            ++$current,
+            0
         );
 
         return array_merge(
@@ -106,8 +106,8 @@ class Menu_Extender {
                 $title,
                 $url,
                 ++$menu_order,
-                $menu_parent,
-                ++$current
+                ++$current,
+                $menu_parent
             );
         }
 
@@ -120,8 +120,8 @@ class Menu_Extender {
      * @param  string $title       Menu item title.
      * @param  string $url         Menu item URL.
      * @param  int    $order       Menu item order.
-     * @param  int    $menu_parent Menu item parent.
      * @param  int    $current     Menu item current.
+     * @param  int    $menu_parent Menu item parent.
      * @return stdClass            Menu item object.
      */
     private function create_menu_item( $title, $url, $order, $current, $menu_parent = 0 ) {

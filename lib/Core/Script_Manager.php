@@ -171,7 +171,14 @@ class Script_Manager {
         }
 
         $cookie = sanitize_text_field( wp_unslash( $_COOKIE['stl_script'] ?? '' ) );
-        return ! empty( $cookie ) ? $cookie : $this->set_cookie( STL()->get_settings( 'general', 'default_script' ) );
+        if ( ! empty( $cookie ) ) {
+            return $cookie;
+        }
+
+        // Allow themes/plugins to override the default script when no cookie is set.
+        $default = apply_filters( 'lcb_default_script', STL()->get_settings( 'general', 'default_script' ) );
+        $default = in_array( $default, array( 'cir', 'lat' ), true ) ? $default : 'cir';
+        return $this->set_cookie( $default );
     }
 
     /**
