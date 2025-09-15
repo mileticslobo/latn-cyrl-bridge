@@ -28,6 +28,10 @@ Fork of SrbTransLatin, reworked to support clean `/lat/` routing while keeping a
 2. Permalinks: visit Settings → Permalinks → Save (flush).
 3. Verify `/` (Cyrillic) and `/lat/` (Latin) both load.
 
+Script priority (Settings → Latn–Cyrl Bridge)
+- URL first (default): `/lat/...` forces Latin; base URLs force Cyrillic. Best for SEO clarity since URL maps to script.
+- Cookie wins: user’s last choice persists even on base URLs. Useful for UX, but base URLs can show Latin content; consider SEO implications.
+
 ## Switcher
 
 - Template helper: `<?php if ( function_exists('lcb_switcher') ) { lcb_switcher(); } ?>`
@@ -78,6 +82,7 @@ Fork of SrbTransLatin, reworked to support clean `/lat/` routing while keeping a
 
 - Routing: `/lat/...` is routed to WP and stripped before query parsing.
 - Internal links are prefixed to `/lat/` in Latin mode; admin/login/REST are excluded.
+- REST/admin safety: Plugin does not run on `/wp-json` REST requests or in wp-admin; AJAX transliteration is disabled by default and can be enabled per action.
 
 ## License
 

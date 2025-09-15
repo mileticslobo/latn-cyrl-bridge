@@ -75,7 +75,8 @@ register_deactivation_hook( __FILE__, function () {
 } );
 
 // Boot original plugin (STL() is defined in lib/Utils/core.php).
-if ( function_exists( 'STL' ) ) {
+// Skip full bootstrap on REST requests to avoid interfering with /wp-json routes.
+if ( function_exists( 'STL' ) && ( ! defined( 'REST_REQUEST' ) || ! REST_REQUEST ) ) {
     STL();
 }
 

@@ -47,14 +47,24 @@ class Script_Manager {
      * Determines the current script for the website
      */
     public function determine_script() {
+        // Do not set or change script in admin or REST to avoid interfering with authentication flows.
+        if ( ( function_exists( 'is_admin' ) && is_admin() ) || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
+            $this->script = 'cir';
+            $this->locale = STL()->ml->get_locale();
+            return;
+        }
         $requested_script = sanitize_text_field( wp_unslash( $_REQUEST[$this->get_url_param()] ?? '' ) ); //phpcs:ignore
 
         // Detect /lat/ prefix early via REQUEST_URI for initial script decision.
         $uri_path = isset( $_SERVER['REQUEST_URI'] ) ? (string) wp_parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ), PHP_URL_PATH ) : '';
         $path     = ltrim( $uri_path, '/' );
+        $priority = get_option( 'lcb_script_priority', 'url' ); // url | cookie
         if ( 'lat' === $path || 0 === strpos( $path, 'lat/' ) ) {
             $this->prefix_active = true;
             $requested_script    = 'lat';
+        } elseif ( 'url' === $priority ) {
+            // URL-first: base URLs enforce Cyrillic.
+            $requested_script    = 'cir';
         }
 
         $this->script = $this->get_cookie( $requested_script );

@@ -31,6 +31,10 @@ Fork notes: Based on SrbTransLatin. Rebranded and extended for `/lat/` routing a
 3. Visit Settings → Permalinks → Save (flush rewrites).
 4. Visit your site at `/` (Cyrillic) and `/lat/` (Latin) to verify.
 
+= Script priority =
+- URL first (default): `/lat/...` forces Latin; base URLs force Cyrillic. Best for SEO clarity.
+- Cookie wins: user’s last choice persists even on base URLs. More UX-driven; base URLs can show Latin content.
+
 == Frequently Asked Questions ==
 
 = Do I need to enter content twice? =

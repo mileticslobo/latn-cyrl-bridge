@@ -148,6 +148,14 @@ class SrbTransLatin {
      * Actions to be performed when the plugin is loaded
      */
     public function on_plugins_loaded() {
+        // Skip REST requests entirely to avoid interfering with plugins like Site Kit.
+        if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+            // Engine also guards REST; this prevents URL rewriter / SEO filters on REST calls.
+            $this->engine = new Core\Engine();
+            do_action( 'lcb_loaded' );
+            return;
+        }
+
         if ( $this->is_request( 'frontend' ) ) {
             new Frontend\Menu_Extender();
             new Frontend\Title_Transliterator();

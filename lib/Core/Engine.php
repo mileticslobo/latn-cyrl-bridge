@@ -40,6 +40,11 @@ class Engine {
      * Loads the needed hooks depending on where we are on the website
      */
     public function load_hooks() {
+        // Do not affect admin or REST API requests.
+        if ( is_admin() || $this->is_rest_request() ) {
+            return;
+        }
+
         $default_priority = 9999;
 
         /**
@@ -52,7 +57,18 @@ class Engine {
          */
         $filter_priority = apply_filters( 'lcb_transliteration_priority', $default_priority );
 
-        if ( STL()->is_request( 'ajax' ) && STL()->should_transliterate() ) {
+        // AJAX: allow only when explicitly enabled and action is whitelisted.
+        if ( STL()->is_request( 'ajax' ) ) {
+            $enabled = get_option( 'lcb_ajax_enable', '0' ) === '1';
+            if ( ! $enabled ) {
+                return;
+            }
+            $action  = isset( $_REQUEST['action'] ) ? sanitize_key( wp_unslash( $_REQUEST['action'] ) ) : '';
+            $allowed = array_filter( array_map( 'trim', explode( ',', (string) get_option( 'lcb_ajax_actions', '' ) ) ) );
+            $allowed = array_map( 'sanitize_key', $allowed );
+            if ( '' === $action || ! in_array( $action, $allowed, true ) ) {
+                return;
+            }
             $this->load_ajax_hooks( $filter_priority );
             return;
         }
@@ -60,6 +76,17 @@ class Engine {
         if ( STL()->is_request( 'frontend' ) && STL()->should_transliterate() ) {
             $this->load_frontend_hooks( $filter_priority );
         }
+    }
+
+    /**
+     * Detect if current request is a REST API request
+     */
+    private function is_rest_request() {
+        if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+            return true;
+        }
+        $uri = isset( $_SERVER['REQUEST_URI'] ) ? (string) $_SERVER['REQUEST_URI'] : '';
+        return false !== strpos( $uri, '/wp-json/' );
     }
 
     /**
