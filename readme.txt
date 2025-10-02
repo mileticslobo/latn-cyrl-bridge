@@ -4,7 +4,7 @@ Tags: transliteration, Serbian, Cyrillic, Latin, hreflang, canonical, Yoast SEO
 Requires at least: 6.0
 Tested up to: 6.3.1
 Requires PHP: 8.0
-Stable tag: 0.1.0
+Stable tag: 1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -57,6 +57,9 @@ Yes. With “Cross-script search” enabled (default), Latin queries find Cyrill
 == Changelog ==
 
 = Unreleased =
+- Nothing yet.
+
+= 1.2 =
 - New “Content source script” option to run the site with either Cyrillic or Latin as the stored script.
 - Engine, titles, menus, and URL rewrites now transliterate both directions (cir→lat and lat→cir) depending on the active view.
 - Added `/cir/` routing, script-aware canonical/hreflang helpers, and Yoast sitemap support for whichever script is secondary.

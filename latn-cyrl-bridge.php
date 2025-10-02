@@ -3,7 +3,7 @@
  * Plugin Name:       Latn–Cyrl Bridge (SR)
  * Plugin URI:        https://github.com/plusinnovative/latn-cyrl-bridge
  * Description:       Dvosmjerno preslovljavanje srpskog pisma (ćirilica ↔ latinica) uz SEO podršku (kanonikali, hreflang) i opcioni /lat/ URL prefiks. Fork originalnog SrbTransLatin plugina.
- * Version:           0.1.0
+ * Version:           1.2
  * Author:            Plus Innovative SRLS
  * Author URI:        https://plusinnovative.com
  * Requires at least: 6.0
@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // New fork constants.
-if ( ! defined( 'LCB_VERSION' ) )      define( 'LCB_VERSION', '0.1.0' );
+if ( ! defined( 'LCB_VERSION' ) )      define( 'LCB_VERSION', '1.2' );
 if ( ! defined( 'LCB_FILE' ) )         define( 'LCB_FILE', __FILE__ );
 if ( ! defined( 'LCB_PATH' ) )         define( 'LCB_PATH', plugin_dir_path( __FILE__ ) );
 if ( ! defined( 'LCB_URL' ) )          define( 'LCB_URL',  plugin_dir_url( __FILE__ ) );
