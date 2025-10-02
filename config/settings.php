@@ -52,6 +52,15 @@ return array(
             ),
 
             array(
+                'title'   => __( 'Content source script', 'latn-cyrl-bridge' ),
+                'desc'    => __( 'Script used when authoring content in WordPress (the plugin will transliterate to the other script on demand)', 'latn-cyrl-bridge' ),
+                'id'      => 'content_script',
+                'type'    => 'select',
+                'default' => 'cir',
+                'options' => stl_get_available_scripts(),
+            ),
+
+            array(
                 'title'   => __( 'URL Parameter', 'latn-cyrl-bridge' ),
                 'id'      => 'url_param',
                 'desc'    => __( 'URL parameter used for script selector', 'latn-cyrl-bridge' ),

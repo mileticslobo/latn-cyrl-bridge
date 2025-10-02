@@ -186,6 +186,11 @@ class SrbTransLatin {
             return in_array( $opt, array( 'cir', 'lat' ), true ) ? $opt : $val;
         }, 5 );
 
+        add_filter( 'lcb_content_script', function ( $val ) {
+            $opt = get_option( 'lcb_content_script', '' );
+            return in_array( $opt, array( 'cir', 'lat' ), true ) ? $opt : $val;
+        }, 5 );
+
         // Global canonical target
         add_filter( 'lcb_main_script', function ( $val ) {
             $opt = get_option( 'lcb_main_script', 'self' );

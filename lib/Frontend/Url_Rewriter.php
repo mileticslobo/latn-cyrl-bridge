@@ -8,7 +8,7 @@
 namespace Oblak\STL\Frontend;
 
 /**
- * Adds /lat/ prefix to internal links when in Latin mode
+ * Adds script prefixes to internal links when serving a non-source script
  */
 class Url_Rewriter {
     public function __construct() {
@@ -21,14 +21,14 @@ class Url_Rewriter {
     }
 
     /**
-     * Prefix URLs generated via home_url() with /lat when in Latin mode
+     * Prefix URLs generated via home_url() with the active script slug when needed.
      */
     public function prefix_home_url( $url, $path, $orig_scheme, $blog_id ) { // phpcs:ignore
         return $this->maybe_prefix( $url );
     }
 
     /**
-     * Prefix direct URLs when in Latin mode
+     * Prefix direct URLs when serving a non-source script
      */
     public function prefix_url( $url ) { // phpcs:ignore
         return $this->maybe_prefix( $url );
@@ -36,7 +36,19 @@ class Url_Rewriter {
 
     private function maybe_prefix( $url ) {
         // Only for Serbian Latin on frontend.
-        if ( ! function_exists( 'STL' ) || ! STL()->manager->is_latin() ) {
+        if ( ! function_exists( 'STL' ) ) {
+            return $url;
+        }
+
+        $manager = STL()->manager;
+        if ( ! $manager->should_transliterate() ) {
+            return $url;
+        }
+
+        $target_script = $manager->get_script();
+        $source_script = $manager->get_source_script();
+
+        if ( $target_script === $source_script ) {
             return $url;
         }
 
@@ -47,16 +59,36 @@ class Url_Rewriter {
 
         $path = isset( $parts['path'] ) ? $parts['path'] : '/';
 
-        // Already prefixed with /lat or is a file path like /wp-admin/, skip admin.
+        $slug = lcb_script_slug( $target_script );
+
+        // Already prefixed with target slug or is a file path like /wp-admin/, skip admin.
         if (
-            0 === strpos( $path, '/lat/' ) || rtrim( $path, '/' ) === '/lat' ||
+            0 === strpos( $path, '/' . $slug . '/' ) || rtrim( $path, '/' ) === '/' . $slug ||
             0 === strpos( $path, '/wp-admin' ) || 0 === strpos( $path, '/wp-login' ) || 0 === strpos( $path, '/wp-json' )
         ) {
             return $url;
         }
 
+        // Remove other script slugs to avoid stacking.
+        foreach ( array( 'lat', 'cir' ) as $other_slug ) {
+            if ( $other_slug === $slug ) {
+                continue;
+            }
+            if ( 0 === strpos( $path, '/' . $other_slug . '/' ) ) {
+                $path = substr( $path, strlen( '/' . $other_slug ) );
+                if ( '' === $path ) {
+                    $path = '/';
+                }
+                break;
+            }
+            if ( rtrim( $path, '/' ) === '/' . $other_slug ) {
+                $path = '/';
+                break;
+            }
+        }
+
         // Prefix.
-        $parts['path'] = '/lat' . ( '/' === $path ? '/' : $path );
+        $parts['path'] = '/' . $slug . ( '/' === $path ? '/' : $path );
 
         return $this->unparse_url( $parts );
     }

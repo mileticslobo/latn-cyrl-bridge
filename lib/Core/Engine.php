@@ -113,10 +113,10 @@ class Engine {
         add_action( 'atom_head', array( $this, 'buffer_start' ), $filter_priority );
         add_action( 'rdf_head', array( $this, 'buffer_start' ), $filter_priority );
         add_action( 'rss2_head', array( $this, 'buffer_start' ), $filter_priority );
-        add_filter( 'gettext', array( $this, 'convert_to_latin' ), $filter_priority );
-        add_filter( 'ngettext', array( $this, 'convert_to_latin' ), $filter_priority );
-        add_filter( 'gettext_with_context', array( $this, 'convert_to_latin' ), $filter_priority );
-        add_filter( 'ngettext_with_context', array( $this, 'convert_to_latin' ), $filter_priority );
+        add_filter( 'gettext', array( $this, 'transliterate' ), $filter_priority );
+        add_filter( 'ngettext', array( $this, 'transliterate' ), $filter_priority );
+        add_filter( 'gettext_with_context', array( $this, 'transliterate' ), $filter_priority );
+        add_filter( 'ngettext_with_context', array( $this, 'transliterate' ), $filter_priority );
 
         if ( 1 === ( 2 - 1 ) ) { // TOODO: Implement option check.
             add_filter( 'the_content', array( $this, 'change_image_urls' ), $filter_priority, 1 );
@@ -155,7 +155,7 @@ class Engine {
     public function ajax_buffer_end( $contents ) {
         return json_decode( $contents, true ) !== null && is_array( json_decode( $contents, true ) )
             ? wp_json_encode( stl_array_map_recursive( array( $this, 'maybe_transliterate' ), json_decode( $contents, true ) ) )
-            : $this->convert_to_latin( $contents );
+            : $this->convert_for_request( $contents );
     }
 
     /**
@@ -166,7 +166,7 @@ class Engine {
      */
     public function maybe_transliterate( $value ) {
         return is_string( $value )
-            ? $this->convert_to_latin( $value )
+            ? $this->convert_for_request( $value )
             : $value;
     }
 
@@ -196,9 +196,19 @@ class Engine {
 
         // phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped
         return STL()->shortcodes->has_shortcodes()
-            ? strtr( $this->convert_to_latin( $contents ), STL()->shortcodes->get_shortcodes() )
-            : $this->convert_to_latin( $contents );
+            ? strtr( $this->convert_for_request( $contents ), STL()->shortcodes->get_shortcodes() )
+            : $this->convert_for_request( $contents );
         // phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
+    }
+
+    /**
+     * Transliterate a string according to the current request direction.
+     *
+     * @param string $contents String to convert.
+     * @return string
+     */
+    public function transliterate( $contents ) {
+        return $this->convert_for_request( $contents );
     }
 
     /**
@@ -225,6 +235,27 @@ class Engine {
     }
 
     /**
+     * Convert content for the current request direction.
+     *
+     * @param string $contents String to convert.
+     * @param bool   $cut_lat  Whether to use cut Latin output (cir->lat only).
+     * @return string
+     */
+    private function convert_for_request( $contents, $cut_lat = false ) {
+        $direction = STL()->manager->get_transliteration_direction();
+
+        if ( 'cir_to_lat' === $direction ) {
+            return $this->convert_to_latin( $contents, $cut_lat );
+        }
+
+        if ( 'lat_to_cir' === $direction ) {
+            return $this->convert_to_cyrillic( $contents );
+        }
+
+        return $contents;
+    }
+
+    /**
      * Changes the image URLs in the content, or in the entire HTML
      *
      * @param  string $contents HTML to change the image URLs in.
@@ -235,9 +266,18 @@ class Engine {
 
         $delim = '__';
 
+        $direction = STL()->manager->get_transliteration_direction();
+        if ( 'lat_to_cir' === $direction ) {
+            $from = 'lat';
+            $to   = 'cir';
+        } else {
+            $from = 'cir';
+            $to   = 'lat';
+        }
+
         foreach ( $dom->findMulti( 'img' ) as $img ) {
-            $img->src    = str_replace( "{$delim}cir", "{$delim}lat", $img->src );
-            $img->srcset = str_replace( "{$delim}cir", "{$delim}lat", $img->srcset );
+            $img->src    = str_replace( "{$delim}{$from}", "{$delim}{$to}", $img->src );
+            $img->srcset = str_replace( "{$delim}{$from}", "{$delim}{$to}", $img->srcset );
         }
 
         return $dom;

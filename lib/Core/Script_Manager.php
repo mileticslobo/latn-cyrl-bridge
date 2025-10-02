@@ -21,6 +21,13 @@ class Script_Manager {
     private $script;
 
     /**
+     * Script used when authoring content (source script).
+     *
+     * @var string
+     */
+    private $source_script = 'cir';
+
+    /**
      * Whether request is under /lat/ prefix
      *
      * @var bool
@@ -39,8 +46,8 @@ class Script_Manager {
      */
     public function __construct() {
         \add_action( 'plugins_loaded', array( $this, 'determine_script' ), 500 );
-        // Allow stripping /lat/ from the request path before query parsing.
-        \add_action( 'pre_parse_request', array( $this, 'detect_lat_prefix' ), 0 );
+        // Allow stripping script prefixes (e.g. /lat/, /cir/) before query parsing.
+        \add_action( 'pre_parse_request', array( $this, 'detect_script_prefix' ), 0 );
     }
 
     /**
@@ -49,8 +56,9 @@ class Script_Manager {
     public function determine_script() {
         // Do not set or change script in admin or REST to avoid interfering with authentication flows.
         if ( ( function_exists( 'is_admin' ) && is_admin() ) || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
-            $this->script = 'cir';
-            $this->locale = STL()->ml->get_locale();
+            $this->script        = 'cir';
+            $this->locale        = STL()->ml->get_locale();
+            $this->source_script = $this->resolve_source_script();
             return;
         }
         $requested_script = sanitize_text_field( wp_unslash( $_REQUEST[$this->get_url_param()] ?? '' ) ); //phpcs:ignore
@@ -62,13 +70,17 @@ class Script_Manager {
         if ( 'lat' === $path || 0 === strpos( $path, 'lat/' ) ) {
             $this->prefix_active = true;
             $requested_script    = 'lat';
-        } elseif ( 'url' === $priority ) {
-            // URL-first: base URLs enforce Cyrillic.
+        } elseif ( 'cir' === $path || 0 === strpos( $path, 'cir/' ) ) {
+            $this->prefix_active = true;
             $requested_script    = 'cir';
+        } elseif ( 'url' === $priority ) {
+            // URL-first: base URLs enforce the content source script.
+            $requested_script = $this->resolve_source_script();
         }
 
-        $this->script = $this->get_cookie( $requested_script );
-        $this->locale = STL()->ml->get_locale();
+        $this->script        = $this->get_cookie( $requested_script );
+        $this->locale        = STL()->ml->get_locale();
+        $this->source_script = $this->resolve_source_script();
     }
 
     /**
@@ -76,15 +88,18 @@ class Script_Manager {
      *
      * @param \WP $wp WP object.
      */
-    public function detect_lat_prefix( $wp ) { // phpcs:ignore
+    public function detect_script_prefix( $wp ) { // phpcs:ignore
         $req = ltrim( (string) $wp->request, '/' );
-        if ( 'lat' === $req || 0 === strpos( $req, 'lat/' ) ) {
-            $this->prefix_active = true;
-            $this->script        = 'lat';
+        foreach ( array( 'lat', 'cir' ) as $slug ) {
+            if ( $slug === $req || 0 === strpos( $req, $slug . '/' ) ) {
+                $this->prefix_active = true;
+                $this->script        = $slug;
 
-            // Strip the leading 'lat' segment so WP can resolve the actual content.
-            $stripped       = ltrim( substr( $req, 3 ), '/' );
-            $wp->request    = $stripped; // e.g. '' for homepage, or 'category/foo'.
+                // Strip the leading script segment so WP can resolve the actual content.
+                $stripped    = ltrim( substr( $req, strlen( $slug ) ), '/' );
+                $wp->request = $stripped; // e.g. '' for homepage, or 'category/foo'.
+                break;
+            }
         }
     }
 
@@ -152,7 +167,7 @@ class Script_Manager {
     }
 
     /**
-     * Whether current request is served under the /lat/ prefix
+     * Whether current request is served under a prefixed script path
      *
      * @return bool
      */
@@ -166,7 +181,39 @@ class Script_Manager {
      * @return bool True if the site should be transliterated, false otherwise
      */
     public function should_transliterate() {
-        return in_array( $this->locale, array( 'mk_MK', 'sr_RS', 'bs_BA' ), true ) && 'lat' === $this->script;
+        return 'none' !== $this->get_transliteration_direction();
+    }
+
+    /**
+     * Get the source script for stored content.
+     */
+    public function get_source_script() {
+        return $this->source_script;
+    }
+
+    /**
+     * Determine transliteration direction for the current request.
+     *
+     * @return string 'cir_to_lat', 'lat_to_cir', or 'none'.
+     */
+    public function get_transliteration_direction() {
+        if ( ! in_array( $this->locale, array( 'mk_MK', 'sr_RS', 'bs_BA' ), true ) ) {
+            return 'none';
+        }
+
+        if ( $this->script === $this->source_script ) {
+            return 'none';
+        }
+
+        if ( 'cir' === $this->source_script && 'lat' === $this->script ) {
+            return 'cir_to_lat';
+        }
+
+        if ( 'lat' === $this->source_script && 'cir' === $this->script ) {
+            return 'lat_to_cir';
+        }
+
+        return 'none';
     }
 
     /**
@@ -205,5 +252,15 @@ class Script_Manager {
         setcookie( 'stl_script', $requested_script, 0, '/', wp_parse_url( home_url() )['host'], is_ssl() );
 
         return $requested_script;
+    }
+
+    /**
+     * Resolve authoring script (content source).
+     */
+    private function resolve_source_script() {
+        $default = STL()->get_settings( 'general', 'content_script' );
+        $default = in_array( $default, array( 'cir', 'lat' ), true ) ? $default : 'cir';
+        $value   = apply_filters( 'lcb_content_script', $default );
+        return in_array( $value, array( 'cir', 'lat' ), true ) ? $value : 'cir';
     }
 }

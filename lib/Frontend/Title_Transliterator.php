@@ -35,9 +35,11 @@ class Title_Transliterator {
             return $title;
         }
 
-        return STL()->manager->is_latin()
-            ? STL()->engine->convert_to_latin( $title )
-            : $title;
+        if ( 'none' === STL()->manager->get_transliteration_direction() ) {
+            return $title;
+        }
+
+        return STL()->engine->transliterate( $title );
     }
 
     /**
@@ -47,10 +49,14 @@ class Title_Transliterator {
      * @return string[]        Transliterated title parts.
      */
     public function transliterate_title_parts( $parts ) {
-        if ( STL()->manager->is_cyrillic() || ! STL()->get_settings( 'advanced', 'fix_titles' ) ) {
+        if ( ! STL()->get_settings( 'advanced', 'fix_titles' ) ) {
             return $parts;
         }
 
-        return array_map( array( STL()->engine, 'convert_to_latin' ), $parts );
+        if ( 'none' === STL()->manager->get_transliteration_direction() ) {
+            return $parts;
+        }
+
+        return array_map( array( STL()->engine, 'transliterate' ), $parts );
     }
 }

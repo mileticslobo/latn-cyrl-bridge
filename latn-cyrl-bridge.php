@@ -55,6 +55,8 @@ spl_autoload_register( function ( $class ) {
 add_action( 'init', function () {
     add_rewrite_rule( '^lat/?$', 'index.php', 'top' );
     add_rewrite_rule( '^lat/.*$', 'index.php', 'top' );
+    add_rewrite_rule( '^cir/?$', 'index.php', 'top' );
+    add_rewrite_rule( '^cir/.*$', 'index.php', 'top' );
 }, 1 );
 
 // Plugin bootstrap and aliases.

@@ -7,7 +7,12 @@
 
 namespace Oblak\STL\Frontend;
 
+use function add_action;
 use function add_filter;
+use function add_query_arg;
+use function is_search;
+use function wp_safe_redirect;
+use function wp_unslash;
 
 use WP_Query;
 
@@ -20,17 +25,15 @@ class Search_Query_Transliterator {
      */
     public function __construct() {
         add_filter( 'posts_search', array( $this, 'convert_terms_to_cyrillic' ), 100, 2 );
+        add_action( 'template_redirect', array( $this, 'redirect_to_matching_script' ), 1 );
     }
 
     /**
-     * Converts latin search terms to cyrillic
+     * Expands search SQL so Latin and Cyrillic queries match either script.
      *
-     * This will only work if:
-     * 1) Search fix is enabled
-     * 2) We're in the main query
-     * 3) We're viewing a page in Serbian
-     * 4) The search is not empty
-     * 5) Search contains latin characters
+     * Runs when the cross-script search option is enabled, on the main front-end
+     * search query for supported locales, and the search string contains
+     * characters we can transliterate.
      *
      * @param  string   $search   Search SQL clause.
      * @param  WP_Query $wp_query WP_Query object.
@@ -38,12 +41,16 @@ class Search_Query_Transliterator {
      */
     public function convert_terms_to_cyrillic( $search, $wp_query ) {
         if (
-        ! STL()->get_settings( 'advanced', 'fix_search' ) ||
-        ! STL()->manager->is_serbian() ||
-        ! $wp_query->is_main_query() ||
-        empty( $wp_query->get( 's' ) ) ||
-        ! $this->is_latin_string( $wp_query->get( 's' ) )
+            ! STL()->get_settings( 'advanced', 'fix_search' ) ||
+            ! $wp_query instanceof WP_Query ||
+            ! STL()->manager->is_serbian() ||
+            ! $wp_query->is_main_query()
         ) {
+            return $search;
+        }
+
+        $raw = (string) $wp_query->get( 's' );
+        if ( '' === trim( $raw ) || 'none' === $this->detect_script( $raw ) ) {
             return $search;
         }
 
@@ -63,6 +70,55 @@ class Search_Query_Transliterator {
     public function modify_search_orderby( $orderby, $wp_query ) {
         $orderby = $this->parse_search_order( $wp_query->query_vars );
         return $orderby;
+    }
+
+    /**
+     * Redirect search results to the matching script variant based on query script.
+     */
+    public function redirect_to_matching_script() {
+        if ( ! STL()->get_settings( 'advanced', 'fix_search' ) || ! STL()->manager->is_serbian() || ! is_search() ) {
+            return;
+        }
+
+        $query = isset( $_GET['s'] ) ? trim( (string) wp_unslash( $_GET['s'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        if ( '' === $query ) {
+            return;
+        }
+
+        $target_script = $this->detect_script( $query );
+        if ( in_array( $target_script, array( 'none', 'mixed' ), true ) ) {
+            return;
+        }
+
+        $current_script = STL()->manager->get_script();
+        if ( $current_script === $target_script ) {
+            return;
+        }
+
+        if ( ! function_exists( 'stl_get_current_url' ) ) {
+            return;
+        }
+
+        $current_url = stl_get_current_url();
+        if ( function_exists( 'lcb_get_script_url' ) ) {
+            $destination = lcb_get_script_url( $target_script, $current_url );
+        } elseif ( 'lat' === $target_script && function_exists( 'lcb_get_lat_url' ) ) {
+            $destination = lcb_get_lat_url( $current_url );
+        } else {
+            $destination = function_exists( 'lcb_get_base_url' ) ? lcb_get_base_url( $current_url ) : null;
+        }
+
+        if ( empty( $destination ) || $destination === $current_url ) {
+            return;
+        }
+
+        $query_args = ! empty( $_GET ) ? wp_unslash( $_GET ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        if ( ! empty( $query_args ) ) {
+            $destination = add_query_arg( $query_args, $destination );
+        }
+
+        wp_safe_redirect( $destination );
+        exit;
     }
 
     /**
@@ -92,9 +148,9 @@ class Search_Query_Transliterator {
         if ( ! empty( $q['sentence'] ) ) {
             $q['search_terms'] = array( $q['s'] );
         } elseif ( preg_match_all( '/".*?("|$)|((?<=[\t ",+])|^)[^\t ",+]+/', $q['s'], $matches ) ) {
-                $q['search_terms_count'] = count( $matches[0] );
-                $q['search_terms']       = $this->parse_search_terms( $matches[0] );
-                // If the search string has only short terms or stopwords, or is 10+ terms long, match it as sentence.
+            $q['search_terms_count'] = count( $matches[0] );
+            $q['search_terms']       = $this->parse_search_terms( $matches[0] );
+            // If the search string has only short terms or stopwords, or is 10+ terms long, match it as sentence.
             if ( empty( $q['search_terms'] ) || count( $q['search_terms'] ) > 9 ) {
                 $q['search_terms'] = array( $q['s'] );
             }
@@ -102,9 +158,11 @@ class Search_Query_Transliterator {
             $q['search_terms'] = array( $q['s'] );
         }
 
-        $n                         = ! empty( $q['exact'] ) ? '' : '%';
-        $searchand                 = '';
-        $q['search_orderby_title'] = array();
+        $n         = ! empty( $q['exact'] ) ? '' : '%';
+        $searchand = '';
+
+        $q['search_title_like_groups'] = array();
+        $q['search_title_like_flat']   = array();
 
         /**
          * Filters the prefix that indicates that a search term should be excluded from results.
@@ -128,19 +186,15 @@ class Search_Query_Transliterator {
                 $andor_op = 'OR';
             }
 
-            if ( $n && ! $exclude ) {
-                $like                        = '%' . $wpdb->esc_like( $term ) . '%';
-                $q['search_orderby_title'][] = $wpdb->prepare( "{$wpdb->posts}.post_title LIKE %s", $like );
-                if ( $this->is_latin_string( $term ) ) {
-                    $q['search_orderby_title'][] = $wpdb->prepare( "{$wpdb->posts}.post_title LIKE %s", '%' . $wpdb->esc_like( STL()->engine->convert_to_cyrillic( $term ) ) . '%' );
-                }
-            }
+            $variants          = $this->get_variants( $term );
+            $variant_clauses   = array();
+            $title_like_clauses = array();
 
-            $like = $n . $wpdb->esc_like( $term ) . $n;
-            // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-            $search .= $wpdb->prepare(
-                <<<SQL
-                {$searchand}(
+            foreach ( $variants as $variant ) {
+                $like = $n . $wpdb->esc_like( $variant ) . $n;
+                // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+                $variant_clauses[] = $wpdb->prepare(
+                    <<<SQL
                     (
                         {$wpdb->posts}.post_title $like_op %s
                     )
@@ -150,35 +204,33 @@ class Search_Query_Transliterator {
                     $andor_op (
                         {$wpdb->posts}.post_content $like_op %s
                     )
-
-                SQL,
-                $like,
-                $like,
-                $like
-            );
-            // If the term is in latin - transliterate and append.
-            if ( $this->is_latin_string( $term ) ) {
-                $search .= $wpdb->prepare(
-                    <<<SQL
-                        $andor_op (
-                            {$wpdb->posts}.post_title $like_op %s
-                        )
-                        $andor_op (
-                            {$wpdb->posts}.post_excerpt $like_op %s
-                        )
-                        $andor_op (
-                            {$wpdb->posts}.post_content $like_op %s
-                        )
                     SQL,
-                    STL()->engine->convert_to_cyrillic( $like ),
-                    STL()->engine->convert_to_cyrillic( $like ),
-                    STL()->engine->convert_to_cyrillic( $like )
+                    $like,
+                    $like,
+                    $like
                 );
+                //phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+                if ( $n && ! $exclude ) {
+                    $title_like_clauses[] = $wpdb->prepare( "{$wpdb->posts}.post_title $like_op %s", $like );
+                }
             }
-            //phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-            $search   .= ')';
+
+            if ( $n && ! $exclude && ! empty( $title_like_clauses ) ) {
+                $q['search_title_like_groups'][] = '(' . implode( ' OR ', $title_like_clauses ) . ')';
+                $q['search_title_like_flat']     = array_merge( $q['search_title_like_flat'], $title_like_clauses );
+            }
+
+            if ( empty( $variant_clauses ) ) {
+                continue;
+            }
+
+            $search   .= $searchand . '(' . implode( ' ' . $andor_op . ' ', $variant_clauses ) . ')';
             $searchand = ' AND ';
         }
+
+        $q['search_title_like_groups'] = array_values( array_unique( $q['search_title_like_groups'] ) );
+        $q['search_title_like_flat']   = array_values( array_unique( $q['search_title_like_flat'] ) );
 
         if ( ! empty( $search ) ) {
             $search = " AND ({$search}) ";
@@ -203,54 +255,48 @@ class Search_Query_Transliterator {
     protected function parse_search_order( &$q ) {
         global $wpdb;
 
-        if ( $q['search_terms_count'] > 1 ) {
-            $num_terms = count( $q['search_orderby_title'] );
+        $flat_clauses   = isset( $q['search_title_like_flat'] ) ? array_values( array_unique( $q['search_title_like_flat'] ) ) : array();
+        $group_clauses  = isset( $q['search_title_like_groups'] ) ? array_values( array_unique( $q['search_title_like_groups'] ) ) : array();
+        $has_multi_terms = ( $q['search_terms_count'] ?? 0 ) > 1;
 
-            // If the search terms contain negative queries, don't bother ordering by sentence matches.
-            $like = '';
-            if ( ! preg_match( '/(?:\s|^)\-/', $q['s'] ) ) {
-                $like          = '%' . $wpdb->esc_like( $q['s'] ) . '%';
-                $cyrillic_like = '%' . $wpdb->esc_like( STL()->engine->convert_to_cyrillic( $q['s'] ) ) . '%';
-            }
+        $order_parts = array();
 
-            $search_orderby = '';
-
-            // Sentence match in 'post_title'.
-            if ( $like ) {
-                $search_orderby .= $wpdb->prepare( "WHEN {$wpdb->posts}.post_title LIKE %s THEN 1 ", $like );
-                if ( $this->is_latin_string( $q['s'] ) ) {
-                    $search_orderby .= $wpdb->prepare( "WHEN {$wpdb->posts}.post_title LIKE %s THEN 1 ", $cyrillic_like );
-                }
-            }
-
-            // Sanity limit, sort as sentence when more than 6 terms
-            // (few searches are longer than 6 terms and most titles are not).
-            if ( $num_terms < 7 ) {
-                // All words in title.
-                $search_orderby .= 'WHEN ' . implode( ' AND ', $q['search_orderby_title'] ) . ' THEN 2 ';
-                // Any word in title, not needed when $num_terms == 1.
-                if ( $num_terms > 1 ) {
-                    $search_orderby .= 'WHEN ' . implode( ' OR ', $q['search_orderby_title'] ) . ' THEN 3 ';
-                }
-            }
-
-            // Sentence match in 'post_content' and 'post_excerpt'.
-            if ( $like ) {
-                $search_orderby .= $wpdb->prepare( "WHEN {$wpdb->posts}.post_excerpt LIKE %s THEN 4 ", $like );
-                $search_orderby .= $wpdb->prepare( "WHEN {$wpdb->posts}.post_excerpt LIKE %s THEN 4 ", $cyrillic_like );
-                $search_orderby .= $wpdb->prepare( "WHEN {$wpdb->posts}.post_content LIKE %s THEN 5 ", $like );
-                $search_orderby .= $wpdb->prepare( "WHEN {$wpdb->posts}.post_content LIKE %s THEN 5 ", $cyrillic_like );
-            }
-
-            if ( $search_orderby ) {
-                $search_orderby = '(CASE ' . $search_orderby . 'ELSE 6 END)';
-            }
-        } else {
-            // Single word or sentence search.
-            $search_orderby = reset( $q['search_orderby_title'] ) . ' DESC';
+        foreach ( $flat_clauses as $clause ) {
+            $order_parts[] = "WHEN {$clause} THEN 1";
         }
 
-        return $search_orderby;
+        if ( $has_multi_terms && ! empty( $group_clauses ) ) {
+            $group_count = count( $group_clauses );
+            if ( $group_count < 7 ) {
+                $order_parts[] = 'WHEN ' . implode( ' AND ', $group_clauses ) . ' THEN 2';
+                if ( $group_count > 1 ) {
+                    $order_parts[] = 'WHEN ' . implode( ' OR ', $group_clauses ) . ' THEN 3';
+                }
+            }
+        }
+
+        $sentence_likes = array();
+        if ( ! preg_match( '/(?:\s|^)\-/', $q['s'] ) ) {
+            foreach ( $this->get_variants( $q['s'] ) as $variant ) {
+                $sentence_likes[] = '%' . $wpdb->esc_like( $variant ) . '%';
+            }
+            $sentence_likes = array_unique( $sentence_likes );
+        }
+
+        foreach ( $sentence_likes as $like ) {
+            $order_parts[] = $wpdb->prepare( "WHEN {$wpdb->posts}.post_excerpt LIKE %s THEN 4 ", $like );
+            $order_parts[] = $wpdb->prepare( "WHEN {$wpdb->posts}.post_content LIKE %s THEN 5 ", $like );
+        }
+
+        if ( ! $has_multi_terms && empty( $order_parts ) && ! empty( $flat_clauses ) ) {
+            return '(' . implode( ' OR ', $flat_clauses ) . ') DESC';
+        }
+
+        if ( empty( $order_parts ) ) {
+            return "{$wpdb->posts}.post_date DESC";
+        }
+
+        return '(CASE ' . implode( ' ', $order_parts ) . ' ELSE 6 END)';
     }
 
     /**
@@ -339,12 +385,64 @@ class Search_Query_Transliterator {
     }
 
     /**
+     * Build unique transliteration variants for a string (original, Latin, Cyrillic)
+     */
+    private function get_variants( $content ) {
+        $content  = (string) $content;
+        $variants = array( $content );
+
+        if ( function_exists( 'STL' ) ) {
+            $stl = STL();
+            if ( isset( $stl->engine ) ) {
+                $variants[] = $stl->engine->convert_to_latin( $content );
+                $variants[] = $stl->engine->convert_to_cyrillic( $content );
+            }
+        }
+
+        $variants = array_filter(
+            array_unique( $variants ),
+            static function ( $value ) {
+                return '' !== $value;
+            }
+        );
+
+        return array_values( $variants );
+    }
+
+    /**
+     * Detect which script the string predominantly uses.
+     */
+    private function detect_script( $content ) {
+        $has_latin     = $this->is_latin_string( $content );
+        $has_cyrillic  = $this->is_cyrillic_string( $content );
+
+        if ( $has_latin && $has_cyrillic ) {
+            return 'mixed';
+        }
+        if ( $has_latin ) {
+            return 'lat';
+        }
+        if ( $has_cyrillic ) {
+            return 'cir';
+        }
+
+        return 'none';
+    }
+
+    /**
      * Checks if the string contains latin characters
      *
      * @param  string $content String to check.
      * @return bool            True if the string contains latin characters, false otherwise.
      */
     private function is_latin_string( $content ) {
-        return preg_match( '/[a-zčćđšž]+/iu', $content ) || preg_match( '/[a-z]+/i', $content );
+        return (bool) preg_match( '/[\p{Latin}]+/u', $content );
+    }
+
+    /**
+     * Checks if the string contains cyrillic characters
+     */
+    private function is_cyrillic_string( $content ) {
+        return (bool) preg_match( '/[\p{Cyrillic}]+/u', $content );
     }
 }

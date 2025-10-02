@@ -80,37 +80,67 @@ function stl_get_current_url() {
  * Get base (Cyrillic) variant of a URL.
  */
 function lcb_get_base_url( $url = null ) {
-    $url   = $url ?? stl_get_current_url();
-    $parts = wp_parse_url( $url );
-    if ( empty( $parts ) ) {
-        return $url;
-    }
-    $path = $parts['path'] ?? '/';
-    if ( 0 === strpos( $path, '/lat/' ) ) {
-        $parts['path'] = substr( $path, 4 );
-        if ( '' === $parts['path'] ) {
-            $parts['path'] = '/';
-        }
-    } elseif ( rtrim( $path, '/' ) === '/lat' ) {
-        $parts['path'] = '/';
-    }
-    return lcb_unparse_url( $parts );
+    $source = function_exists( 'STL' ) ? STL()->manager->get_source_script() : 'cir';
+    return lcb_get_script_url( $source, $url );
 }
 
 /**
  * Get Latin variant of a URL (prefix with /lat).
  */
 function lcb_get_lat_url( $url = null ) {
-    $url   = $url ?? stl_get_current_url();
-    $parts = wp_parse_url( $url );
+    return lcb_get_script_url( 'lat', $url );
+}
+
+/**
+ * Map script key to URL slug.
+ */
+function lcb_script_slug( $script ) {
+    return 'lat' === $script ? 'lat' : 'cir';
+}
+
+/**
+ * Get variant of URL for a given script.
+ */
+function lcb_get_script_url( $script, $url = null ) {
+    $script = in_array( $script, array( 'cir', 'lat' ), true ) ? $script : 'cir';
+    $url    = $url ?? stl_get_current_url();
+    $parts  = wp_parse_url( $url );
     if ( empty( $parts ) ) {
         return $url;
     }
+
     $path = $parts['path'] ?? '/';
-    if ( 0 === strpos( $path, '/lat/' ) || rtrim( $path, '/' ) === '/lat' ) {
-        return $url;
+    $slugs = array(
+        'cir' => lcb_script_slug( 'cir' ),
+        'lat' => lcb_script_slug( 'lat' ),
+    );
+
+    foreach ( $slugs as $slug ) {
+        if ( 0 === strpos( $path, '/' . $slug . '/' ) ) {
+            $path = substr( $path, strlen( '/' . $slug ) );
+            if ( '' === $path ) {
+                $path = '/';
+            }
+            break;
+        }
+        if ( rtrim( $path, '/' ) === '/' . $slug ) {
+            $path = '/';
+            break;
+        }
     }
-    $parts['path'] = '/lat' . ( '/' === $path ? '/' : $path );
+
+    $source_script = 'cir';
+    if ( function_exists( 'STL' ) && isset( STL()->manager ) ) {
+        $source_script = STL()->manager->get_source_script();
+    }
+
+    if ( $script === $source_script ) {
+        $parts['path'] = $path;
+        return lcb_unparse_url( $parts );
+    }
+
+    $slug          = $slugs[ $script ];
+    $parts['path'] = '/' . $slug . ( '/' === $path ? '/' : $path );
     return lcb_unparse_url( $parts );
 }
 
@@ -194,10 +224,10 @@ function stl_script_selector( $args, $eecho = true ) {
 			'separator'     => '<span>&nbsp; | &nbsp;</span>',
 			'cir_caption'   => 'Ћирилица',
 			'lat_caption'   => 'Latinica',
-			'inactive_only' => false,
+            'inactive_only' => false,
             'active_script' => STL()->manager->get_script(),
-            'cir_link'      => lcb_get_base_url( stl_get_current_url() ),
-            'lat_link'      => lcb_get_lat_url( stl_get_current_url() ),
+            'cir_link'      => lcb_get_script_url( 'cir', stl_get_current_url() ),
+            'lat_link'      => lcb_get_script_url( 'lat', stl_get_current_url() ),
         )
 	);
 
