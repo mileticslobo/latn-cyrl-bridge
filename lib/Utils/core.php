@@ -40,8 +40,8 @@ function stl_get_settings_array() {
  */
 function stl_get_available_scripts() {
     return array(
-        'cir' => __( 'Cyrillic', 'latn-cyrl-bridge' ),
-        'lat' => __( 'Latin', 'latn-cyrl-bridge' ),
+        'cir' => __( 'Cyrillic', 'latncyrl-bridge-sr' ),
+        'lat' => __( 'Latin', 'latncyrl-bridge-sr' ),
     );
 }
 
@@ -163,8 +163,8 @@ function lcb_unparse_url( $parts ) {
  */
 function lcb_switcher( $args = array(), $echo = true ) {
     $defaults = array(
-        'cir_caption' => __( 'Ћирилица', 'latn-cyrl-bridge' ),
-        'lat_caption' => __( 'Latinica', 'latn-cyrl-bridge' ),
+        'cir_caption' => __( 'Ћирилица', 'latncyrl-bridge-sr' ),
+        'lat_caption' => __( 'Latinica', 'latncyrl-bridge-sr' ),
         'separator'   => ' | ',
     );
     $args = wp_parse_args( $args, $defaults );

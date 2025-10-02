@@ -21,10 +21,9 @@ class Settings_Page {
      */
     public function add_menu() {
         add_options_page(
-            __( 'Latn–Cyrl Bridge', 'latn-cyrl-bridge' ),
-            __( 'Latn–Cyrl Bridge', 'latn-cyrl-bridge' ),
-            'manage_options',
-            'latn-cyrl-bridge',
+            __( 'Latn–Cyrl Bridge', 'latncyrl-bridge-sr' ),
+            __( 'Latn–Cyrl Bridge', 'latncyrl-bridge-sr' ),
+            'manage_options', 'latncyrl-bridge-sr',
             array( $this, 'render_page' )
         );
     }
@@ -41,11 +40,11 @@ class Settings_Page {
         register_setting( 'lcb_settings', 'lcb_ajax_actions', array( $this, 'sanitize_actions' ) );
         register_setting( 'lcb_settings', 'latn_cyrl_bridge_advanced', array( $this, 'sanitize_advanced' ) );
 
-        add_settings_section( 'lcb_section_main', __( 'General', 'latn-cyrl-bridge' ), '__return_false', 'lcb_settings' );
+        add_settings_section( 'lcb_section_main', __( 'General', 'latncyrl-bridge-sr' ), '__return_false', 'lcb_settings' );
 
         add_settings_field(
             'lcb_default_script',
-            __( 'Default script (when no choice yet)', 'latn-cyrl-bridge' ),
+            __( 'Default script (when no choice yet)', 'latncyrl-bridge-sr' ),
             array( $this, 'field_default_script' ),
             'lcb_settings',
             'lcb_section_main'
@@ -53,7 +52,7 @@ class Settings_Page {
 
         add_settings_field(
             'lcb_content_script',
-            __( 'Content source script', 'latn-cyrl-bridge' ),
+            __( 'Content source script', 'latncyrl-bridge-sr' ),
             array( $this, 'field_content_script' ),
             'lcb_settings',
             'lcb_section_main'
@@ -61,7 +60,7 @@ class Settings_Page {
 
         add_settings_field(
             'lcb_main_script',
-            __( 'Canonical target (main script)', 'latn-cyrl-bridge' ),
+            __( 'Canonical target (main script)', 'latncyrl-bridge-sr' ),
             array( $this, 'field_main_script' ),
             'lcb_settings',
             'lcb_section_main'
@@ -69,7 +68,7 @@ class Settings_Page {
 
         add_settings_field(
             'lcb_script_priority',
-            __( 'Script priority', 'latn-cyrl-bridge' ),
+            __( 'Script priority', 'latncyrl-bridge-sr' ),
             array( $this, 'field_script_priority' ),
             'lcb_settings',
             'lcb_section_main'
@@ -77,7 +76,7 @@ class Settings_Page {
 
         add_settings_field(
             'lcb_ajax_enable',
-            __( 'Enable AJAX transliteration', 'latn-cyrl-bridge' ),
+            __( 'Enable AJAX transliteration', 'latncyrl-bridge-sr' ),
             array( $this, 'field_ajax_enable' ),
             'lcb_settings',
             'lcb_section_main'
@@ -85,7 +84,7 @@ class Settings_Page {
 
         add_settings_field(
             'lcb_ajax_actions',
-            __( 'AJAX actions whitelist', 'latn-cyrl-bridge' ),
+            __( 'AJAX actions whitelist', 'latncyrl-bridge-sr' ),
             array( $this, 'field_ajax_actions' ),
             'lcb_settings',
             'lcb_section_main'
@@ -93,14 +92,14 @@ class Settings_Page {
 
         add_settings_section(
             'lcb_section_advanced',
-            __( 'Advanced', 'latn-cyrl-bridge' ),
+            __( 'Advanced', 'latncyrl-bridge-sr' ),
             '__return_false',
             'lcb_settings'
         );
 
         add_settings_field(
             'latn_cyrl_bridge_fix_search',
-            __( 'Cross-script search', 'latn-cyrl-bridge' ),
+            __( 'Cross-script search', 'latncyrl-bridge-sr' ),
             array( $this, 'field_fix_search' ),
             'lcb_settings',
             'lcb_section_advanced'
@@ -172,8 +171,8 @@ class Settings_Page {
     public function field_default_script() {
         $val = get_option( 'lcb_default_script', 'cir' );
         ?>
-        <label><input type="radio" name="lcb_default_script" value="cir" <?php checked( $val, 'cir' ); ?>> <?php esc_html_e( 'Cyrillic (cir)', 'latn-cyrl-bridge' ); ?></label><br>
-        <label><input type="radio" name="lcb_default_script" value="lat" <?php checked( $val, 'lat' ); ?>> <?php esc_html_e( 'Latin (lat)', 'latn-cyrl-bridge' ); ?></label>
+        <label><input type="radio" name="lcb_default_script" value="cir" <?php checked( $val, 'cir' ); ?>> <?php esc_html_e( 'Cyrillic (cir)', 'latncyrl-bridge-sr' ); ?></label><br>
+        <label><input type="radio" name="lcb_default_script" value="lat" <?php checked( $val, 'lat' ); ?>> <?php esc_html_e( 'Latin (lat)', 'latncyrl-bridge-sr' ); ?></label>
         <?php
     }
 
@@ -183,9 +182,9 @@ class Settings_Page {
     public function field_content_script() {
         $val = get_option( 'lcb_content_script', 'cir' );
         ?>
-        <label><input type="radio" name="lcb_content_script" value="cir" <?php checked( $val, 'cir' ); ?>> <?php esc_html_e( 'Content is authored in Cyrillic (cir)', 'latn-cyrl-bridge' ); ?></label><br>
-        <label><input type="radio" name="lcb_content_script" value="lat" <?php checked( $val, 'lat' ); ?>> <?php esc_html_e( 'Content is authored in Latin (lat)', 'latn-cyrl-bridge' ); ?></label>
-        <p class="description"><?php esc_html_e( 'Choose the script you use when editing posts and pages. The other script will be produced automatically on the front end.', 'latn-cyrl-bridge' ); ?></p>
+        <label><input type="radio" name="lcb_content_script" value="cir" <?php checked( $val, 'cir' ); ?>> <?php esc_html_e( 'Content is authored in Cyrillic (cir)', 'latncyrl-bridge-sr' ); ?></label><br>
+        <label><input type="radio" name="lcb_content_script" value="lat" <?php checked( $val, 'lat' ); ?>> <?php esc_html_e( 'Content is authored in Latin (lat)', 'latncyrl-bridge-sr' ); ?></label>
+        <p class="description"><?php esc_html_e( 'Choose the script you use when editing posts and pages. The other script will be produced automatically on the front end.', 'latncyrl-bridge-sr' ); ?></p>
         <?php
     }
 
@@ -196,9 +195,9 @@ class Settings_Page {
         $val = get_option( 'lcb_main_script', 'self' );
         ?>
         <select name="lcb_main_script">
-            <option value="self" <?php selected( $val, 'self' ); ?>><?php esc_html_e( 'Self (recommended) — canonical to current script', 'latn-cyrl-bridge' ); ?></option>
-            <option value="cir" <?php selected( $val, 'cir' ); ?>><?php esc_html_e( 'Cyrillic — canonical always points to base', 'latn-cyrl-bridge' ); ?></option>
-            <option value="lat" <?php selected( $val, 'lat' ); ?>><?php esc_html_e( 'Latin — canonical always points to /lat/', 'latn-cyrl-bridge' ); ?></option>
+            <option value="self" <?php selected( $val, 'self' ); ?>><?php esc_html_e( 'Self (recommended) — canonical to current script', 'latncyrl-bridge-sr' ); ?></option>
+            <option value="cir" <?php selected( $val, 'cir' ); ?>><?php esc_html_e( 'Cyrillic — canonical always points to base', 'latncyrl-bridge-sr' ); ?></option>
+            <option value="lat" <?php selected( $val, 'lat' ); ?>><?php esc_html_e( 'Latin — canonical always points to /lat/', 'latncyrl-bridge-sr' ); ?></option>
         </select>
         <?php
     }
@@ -209,9 +208,9 @@ class Settings_Page {
     public function field_script_priority() {
         $val = get_option( 'lcb_script_priority', 'url' );
         ?>
-        <label><input type="radio" name="lcb_script_priority" value="url" <?php checked( $val, 'url' ); ?>> <?php esc_html_e( 'URL first (recommended): /lat forces Latin; base URL forces Cyrillic', 'latn-cyrl-bridge' ); ?></label><br>
-        <label><input type="radio" name="lcb_script_priority" value="cookie" <?php checked( $val, 'cookie' ); ?>> <?php esc_html_e( 'Cookie wins: user choice persists even on base URLs', 'latn-cyrl-bridge' ); ?></label>
-        <p class="description"><?php esc_html_e( 'URL-first is better for SEO clarity. Cookie-wins can keep Latin content at base URLs if the user last chose Latin.', 'latn-cyrl-bridge' ); ?></p>
+        <label><input type="radio" name="lcb_script_priority" value="url" <?php checked( $val, 'url' ); ?>> <?php esc_html_e( 'URL first (recommended): /lat forces Latin; base URL forces Cyrillic', 'latncyrl-bridge-sr' ); ?></label><br>
+        <label><input type="radio" name="lcb_script_priority" value="cookie" <?php checked( $val, 'cookie' ); ?>> <?php esc_html_e( 'Cookie wins: user choice persists even on base URLs', 'latncyrl-bridge-sr' ); ?></label>
+        <p class="description"><?php esc_html_e( 'URL-first is better for SEO clarity. Cookie-wins can keep Latin content at base URLs if the user last chose Latin.', 'latncyrl-bridge-sr' ); ?></p>
         <?php
     }
 
@@ -223,9 +222,9 @@ class Settings_Page {
         ?>
         <label>
             <input type="checkbox" name="lcb_ajax_enable" value="1" <?php checked( $val, '1' ); ?>>
-            <?php esc_html_e( 'Enable transliteration for selected admin-ajax actions only (not REST).', 'latn-cyrl-bridge' ); ?>
+            <?php esc_html_e( 'Enable transliteration for selected admin-ajax actions only (not REST).', 'latncyrl-bridge-sr' ); ?>
         </label>
-        <p class="description"><?php esc_html_e( 'Leave unchecked unless your front end loads visible text via admin-ajax. This does not affect /wp-json/ REST responses.', 'latn-cyrl-bridge' ); ?></p>
+        <p class="description"><?php esc_html_e( 'Leave unchecked unless your front end loads visible text via admin-ajax. This does not affect /wp-json/ REST responses.', 'latncyrl-bridge-sr' ); ?></p>
         <?php
     }
 
@@ -236,7 +235,7 @@ class Settings_Page {
         $val = get_option( 'lcb_ajax_actions', '' );
         ?>
         <input type="text" class="regular-text" name="lcb_ajax_actions" value="<?php echo esc_attr( $val ); ?>">
-        <p class="description"><?php esc_html_e( 'Comma-separated list of admin-ajax actions to transliterate, e.g. lsvr_load_more, theme_live_search. Only used when enabled above.', 'latn-cyrl-bridge' ); ?></p>
+        <p class="description"><?php esc_html_e( 'Comma-separated list of admin-ajax actions to transliterate, e.g. lsvr_load_more, theme_live_search. Only used when enabled above.', 'latncyrl-bridge-sr' ); ?></p>
         <?php
     }
 
@@ -249,9 +248,9 @@ class Settings_Page {
         ?>
         <label>
             <input type="checkbox" name="latn_cyrl_bridge_advanced[fix_search]" value="yes" <?php checked( $is_enabled ); ?>>
-            <?php esc_html_e( 'Enable cross-script search (Cyrillic ↔ Latin).', 'latn-cyrl-bridge' ); ?>
+            <?php esc_html_e( 'Enable cross-script search (Cyrillic ↔ Latin).', 'latncyrl-bridge-sr' ); ?>
         </label>
-        <p class="description"><?php esc_html_e( 'When enabled, search queries typed in one script also match content stored in the other script.', 'latn-cyrl-bridge' ); ?></p>
+        <p class="description"><?php esc_html_e( 'When enabled, search queries typed in one script also match content stored in the other script.', 'latncyrl-bridge-sr' ); ?></p>
         <?php
     }
 
@@ -264,7 +263,7 @@ class Settings_Page {
         }
         ?>
         <div class="wrap">
-            <h1><?php esc_html_e( 'Latn–Cyrl Bridge', 'latn-cyrl-bridge' ); ?></h1>
+            <h1><?php esc_html_e( 'Latn–Cyrl Bridge', 'latncyrl-bridge-sr' ); ?></h1>
             <form method="post" action="options.php">
                 <?php
                 settings_fields( 'lcb_settings' );

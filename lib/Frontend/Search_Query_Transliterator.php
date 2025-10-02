@@ -193,18 +193,12 @@ class Search_Query_Transliterator {
             foreach ( $variants as $variant ) {
                 $like = $n . $wpdb->esc_like( $variant ) . $n;
                 // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+                $clause  = '(' . "{$wpdb->posts}.post_title {$like_op} %s" . ')';
+                $clause .= " {$andor_op} (" . "{$wpdb->posts}.post_excerpt {$like_op} %s" . ')';
+                $clause .= " {$andor_op} (" . "{$wpdb->posts}.post_content {$like_op} %s" . ')';
+
                 $variant_clauses[] = $wpdb->prepare(
-                    <<<SQL
-                    (
-                        {$wpdb->posts}.post_title $like_op %s
-                    )
-                    $andor_op (
-                        {$wpdb->posts}.post_excerpt $like_op %s
-                    )
-                    $andor_op (
-                        {$wpdb->posts}.post_content $like_op %s
-                    )
-                    SQL,
+                    $clause,
                     $like,
                     $like,
                     $like

@@ -8,7 +8,7 @@
  * Author URI:        https://plusinnovative.com
  * Requires at least: 6.0
  * Requires PHP:      8.0
- * Text Domain:       latn-cyrl-bridge
+ * Text Domain:       latncyrl-bridge-sr
  * Domain Path:       /languages
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
@@ -27,7 +27,7 @@ if ( ! defined( 'LCB_VERSION' ) )      define( 'LCB_VERSION', '1.2' );
 if ( ! defined( 'LCB_FILE' ) )         define( 'LCB_FILE', __FILE__ );
 if ( ! defined( 'LCB_PATH' ) )         define( 'LCB_PATH', plugin_dir_path( __FILE__ ) );
 if ( ! defined( 'LCB_URL' ) )          define( 'LCB_URL',  plugin_dir_url( __FILE__ ) );
-if ( ! defined( 'LCB_TEXTDOMAIN' ) )   define( 'LCB_TEXTDOMAIN', 'latn-cyrl-bridge' );
+if ( ! defined( 'LCB_TEXTDOMAIN' ) )   define( 'LCB_TEXTDOMAIN', 'latncyrl-bridge-sr' );
 
 // Back-compat constants expected by original SrbTransLatin bootstrap.
 if ( ! defined( 'STL_PLUGIN_FILE' ) )      define( 'STL_PLUGIN_FILE', __FILE__ );
@@ -84,7 +84,7 @@ if ( function_exists( 'STL' ) && ( ! defined( 'REST_REQUEST' ) || ! REST_REQUEST
 
 // Add Settings action link in the Plugins list.
 add_filter( 'plugin_action_links_' . STL_PLUGIN_BASENAME, function ( $links ) {
-    $url = admin_url( 'options-general.php?page=latn-cyrl-bridge' );
-    $links[] = '<a href="' . esc_url( $url ) . '">' . esc_html__( 'Settings', 'latn-cyrl-bridge' ) . '</a>';
+    $url = admin_url( 'options-general.php?page=latncyrl-bridge-sr' );
+    $links[] = '<a href="' . esc_url( $url ) . '">' . esc_html__( 'Settings', 'latncyrl-bridge-sr' ) . '</a>';
     return $links;
 } );

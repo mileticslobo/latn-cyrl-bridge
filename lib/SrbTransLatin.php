@@ -11,10 +11,13 @@ namespace Oblak\STL;
 use Oblak\WP\Settings_Helper_Trait;
 use function add_action;
 use function add_filter;
+use function apply_filters;
 use function get_option;
 use function do_action;
 use function is_admin;
-use function load_plugin_textdomain;
+use function determine_locale;
+use function load_textdomain;
+use function plugin_dir_path;
 use function register_widget;
 
 /**
@@ -128,7 +131,7 @@ class SrbTransLatin {
      * Plugin hooks
      */
     public function init_hooks() {
-        add_action( 'plugins_loaded', array( $this, 'load_textdomain' ) );
+        add_action( 'plugins_loaded', array( $this, 'bootstrap_textdomain' ) );
         add_action( 'plugins_loaded', array( $this, 'on_plugins_loaded' ) );
         add_action( 'plugins_loaded', array( $this, 'ml_plugin_compat' ), -1 );
         add_action( 'widgets_init', array( $this, 'register_widget' ) );
@@ -138,10 +141,32 @@ class SrbTransLatin {
     /**
      * Loads the plugin textdomain
      */
-    public function load_textdomain() {
-        // Load fork textdomain from /languages directory.
-        $rel = dirname( STL_PLUGIN_BASENAME ) . '/languages';
-        load_plugin_textdomain( 'latn-cyrl-bridge', false, $rel );
+    public function bootstrap_textdomain() {
+        $textdomain = LCB_TEXTDOMAIN;
+
+        /**
+         * Skip bundled translation loading.
+         *
+         * Allow site owners to short-circuit the manual loader if they prefer to rely on
+         * WordPress.org language packs exclusively.
+         *
+         * @since 1.2.0
+         *
+         * @param bool $skip Whether to skip loading bundled translations.
+         */
+        if ( apply_filters( 'lcb_skip_manual_textdomain_load', false ) ) {
+            return;
+        }
+
+        $locale = determine_locale();
+        if ( empty( $locale ) ) {
+            return;
+        }
+
+        $mofile = plugin_dir_path( LCB_FILE ) . 'languages/' . $textdomain . '-' . $locale . '.mo';
+        if ( file_exists( $mofile ) ) {
+            load_textdomain( $textdomain, $mofile );
+        }
     }
 
     /**

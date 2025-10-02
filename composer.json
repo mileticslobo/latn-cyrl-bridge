@@ -1,0 +1,18 @@
+{
+    "name": "plusinnovative/latncyrl-bridge-sr",
+    "description": "Latn–Cyrl Bridge (SR) WordPress plugin",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "php": "^8.0",
+        "oblak/transliterator": "^2.0.2",
+        "oblak/wp-plugin-settings-manager": "^1.1",
+        "symfony/css-selector": "^5.4",
+        "voku/simple_html_dom": "^4.8"
+    },
+    "autoload": {
+        "psr-4": {
+            "Oblak\\STL\\": "lib/"
+        }
+    }
+}

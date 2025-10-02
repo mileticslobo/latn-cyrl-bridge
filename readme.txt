@@ -2,7 +2,7 @@
 Contributors: plusinnovative
 Tags: transliteration, Serbian, Cyrillic, Latin, hreflang, canonical, Yoast SEO
 Requires at least: 6.0
-Tested up to: 6.5
+Tested up to: 6.8
 Requires PHP: 8.0
 Stable tag: 1.2
 License: GPLv2 or later
