@@ -2,7 +2,7 @@
 Contributors: plusinnovative
 Tags: transliteration, Serbian, Cyrillic, Latin, hreflang, canonical, Yoast SEO
 Requires at least: 6.0
-Tested up to: 6.3.1
+Tested up to: 6.5
 Requires PHP: 8.0
 Stable tag: 1.2
 License: GPLv2 or later
@@ -53,6 +53,17 @@ Yes. Most internal URLs are prefixed with `/lat` automatically in Latin mode, ex
 
 = Does search work across scripts? =
 Yes. With “Cross-script search” enabled (default), Latin queries find Cyrillic content and vice versa, with automatic redirection to the matching script view.
+
+== Screenshots ==
+
+1. Script switcher injected into a navigation menu.
+2. General settings screen with script preferences.
+3. Cyrillic search query redirected to Latin results list.
+
+== Upgrade Notice ==
+
+= 1.2 =
+Big release that adds `/cir/` routing, two-way transliteration, Yoast sitemap support, and a configurable content source script. Re-save permalinks after upgrading.
 
 == Changelog ==
 
