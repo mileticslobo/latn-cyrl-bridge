@@ -56,9 +56,7 @@ Yes. With “Cross-script search” enabled (default), Latin queries find Cyrill
 
 == Screenshots ==
 
-1. Script switcher injected into a navigation menu.
-2. General settings screen with script preferences.
-3. Cyrillic search query redirected to Latin results list.
+1. Settings page.
 
 == Upgrade Notice ==
 
